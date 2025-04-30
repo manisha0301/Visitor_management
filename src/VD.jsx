@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { Search } from 'lucide-react';
+import image1 from './assets/ayu.png'; // Adjust the path as necessary
 
 const formatDateTime = (date) => {
   return date.toLocaleString('en-IN', {
@@ -14,6 +15,7 @@ const formatDateTime = (date) => {
 
 const VD = () => {
   const [searchQuery, setSearchQuery] = useState('');
+  const [enlargedImage, setEnlargedImage] = useState(null); // 🔸 New state for image overlay
 
   const dummyData = [
     {
@@ -26,7 +28,7 @@ const VD = () => {
       email: 'ayushraj1408@gmail.com',
       personToMeet: 'John Doe',
       purpose: 'Project Discussion',
-      photo: null,
+      photo: image1,
     },
     {
       dateTime: formatDateTime(new Date()),
@@ -104,7 +106,12 @@ const VD = () => {
                 <td className="px-6 py-4 whitespace-nowrap">{visitor.purpose}</td>
                 <td className="px-6 py-4 whitespace-nowrap">
                   {visitor.photo ? (
-                    <img src={visitor.photo} alt="Visitor" className="h-10 w-10 rounded-full object-cover" />
+                    <img
+                      src={visitor.photo}
+                      alt="Visitor"
+                      className="h-10 w-10 rounded-full object-cover cursor-pointer"
+                      onClick={() => setEnlargedImage(visitor.photo)} // 🔸 Set image
+                    />
                   ) : (
                     <span className="text-gray-400 text-sm italic">No Photo</span>
                   )}
@@ -121,6 +128,21 @@ const VD = () => {
           </tbody>
         </table>
       </div>
+
+      {/* 🔸 Enlarged Image Overlay */}
+      {enlargedImage && (
+        <div
+          className="fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center z-50"
+          onClick={() => setEnlargedImage(null)}
+        >
+          <img
+            src={enlargedImage}
+            alt="Enlarged"
+            className="max-w-full max-h-full rounded-lg"
+            onClick={(e) => e.stopPropagation()} // Prevent closing when clicking image
+          />
+        </div>
+      )}
     </div>
   );
 };
