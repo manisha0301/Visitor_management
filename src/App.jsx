@@ -4,6 +4,8 @@ import VisitorForm from "./VisitorForm"; // your existing visitor form
 import CourierForm from "./CourierForm"; 
 import SplashScreen from "./SplashScreen";
 import SelectionScreen from "./SelectionScreen";
+import Login from "./Login";
+import Dashboard from "./Dashboard";
 
 function App() {
   return (
@@ -13,6 +15,8 @@ function App() {
         <Route path="/select" element={<SelectionScreen />} />
         <Route path="/visitor" element={<VisitorForm />} />
         <Route path="/courier" element={<CourierForm />} />
+        <Route path="/login" element={<Login />} />
+        <Route path="/dashboard" element={<Dashboard />} />
       </Routes>
     </Router>
   );
