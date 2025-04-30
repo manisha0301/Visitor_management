@@ -123,7 +123,26 @@ export default function VisitorForm() {
     e.preventDefault();
     
     if (validateForm()) {
-      console.log("Form submitted:", formData);
+      //console.log("Form submitted:", formData);
+
+      fetch('http://localhost:5000/api/visitors/submit', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(formData)
+      })
+      .then(res => {
+        if (!res.ok) throw new Error("Failed to submit");
+        return res.json();
+      })
+      .then(data => {
+        console.log('Submitted successfully:', data);
+      })
+      .catch(err => {
+        console.error('Submission error:', err);
+      });
+      
       
       // Save the current SL number to localStorage
       localStorage.setItem('lastSlNumber', formData.slNumber);

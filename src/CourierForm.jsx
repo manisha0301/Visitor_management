@@ -27,8 +27,9 @@ export default function CourierForm() {
     const day = String(date.getDate()).padStart(2, '0');
     const hours = String(date.getHours()).padStart(2, '0');
     const minutes = String(date.getMinutes()).padStart(2, '0');
+    const seconds = String(date.getSeconds()).padStart(2, '0');
     
-    return `${year}-${month}-${day}T${hours}:${minutes}`;
+    return `${year}-${month}-${day}T${hours}:${minutes}:${seconds}`;
   }
 
   useEffect(() => {
@@ -79,40 +80,83 @@ export default function CourierForm() {
     return Object.keys(errors).length === 0;
   };
 
+
+
   const handleSubmit = (e) => {
     e.preventDefault();
-    
+  
     if (validateForm()) {
-      console.log("Form submitted:", formData);
-      
-      // Save the current SL number to localStorage
+      // Save SL number
       localStorage.setItem('lastserialnumber', formData.serialnumber);
-      
-      // Animate the submit button
-      setSubmitAnimation(true);
-      
-      // Show success message
-      setTimeout(() => {
-        setFormSubmitted(true);
-        
-        // Reset form after 3 seconds
-        setTimeout(() => {
-          const nextserialnumber = formData.serialnumber + 1;
-          setserialnumber(nextserialnumber);
-          navigate("/select");
-        }, 3000);
-      }, 1000);
+  
+      // Submit to backend
+      fetch('http://localhost:5000/api/couriers/submit', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(formData),
+      })
+        .then((res) => {
+          if (!res.ok) throw new Error('Failed to submit');
+          return res.json();
+        })
+        .then((data) => {
+          console.log('✅ Courier submitted:', data);
+  
+          setSubmitAnimation(true);
+          setTimeout(() => {
+            setFormSubmitted(true);
+            setTimeout(() => {
+              const nextserialnumber = formData.serialnumber + 1;
+              setserialnumber(nextserialnumber);
+              navigate("/select");
+            }, 3000);
+          }, 1000);
+        })
+        .catch((err) => {
+          console.error('❌ Submission error:', err);
+          alert("Submission failed. Check console.");
+        });
     } else {
       console.log("Form has errors");
     }
   };
 
-  // Webcam configuration
-  const videoConstraints = {
-    width: 1280,
-    height: 720,
-    facingMode: "user"
-  };
+
+
+  // const handleSubmit = (e) => {
+  //   e.preventDefault();
+    
+  //   if (validateForm()) {
+  //     console.log("Form submitted:", formData);
+      
+  //     // Save the current SL number to localStorage
+  //     localStorage.setItem('lastserialnumber', formData.serialnumber);
+      
+  //     // Animate the submit button
+  //     setSubmitAnimation(true);
+      
+  //     // Show success message
+  //     setTimeout(() => {
+  //       setFormSubmitted(true);
+        
+  //       // Reset form after 3 seconds
+  //       setTimeout(() => {
+  //         const nextserialnumber = formData.serialnumber + 1;
+  //         setserialnumber(nextserialnumber);
+  //         navigate("/select");
+  //       }, 3000);
+  //     }, 1000);
+  //   } else {
+  //     console.log("Form has errors");
+  //   }
+  // };
+
+  // // Webcam configuration
+  // const videoConstraints = {
+  //   width: 1280,
+  //   height: 720,
+  //   facingMode: "user"
+  // };
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-100 p-4 sm:p-6 md:p-8 overflow-hidden">
