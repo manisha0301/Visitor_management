@@ -15,6 +15,15 @@ export default function VisitorForm() {
   const [formErrors, setFormErrors] = useState({});
   const [submitAnimation, setSubmitAnimation] = useState(false);
   const [showCamera, setShowCamera] = useState(false);
+  const [formErrors1, setFormErrors1] = useState({
+    phone: "",
+    otp: "",
+  });
+  const [showOtpButton, setShowOtpButton] = useState(false);
+  const [otpSent, setOtpSent] = useState(false);
+  const [showOtpModal, setShowOtpModal] = useState(false);
+  const [otpVerified, setOtpVerified] = useState(false);
+  const [isVerifying, setIsVerifying] = useState(false);
   
   const [formData, setFormData] = useState({
     dateTime: formatDateTime(new Date()),
@@ -35,8 +44,9 @@ export default function VisitorForm() {
     const day = String(date.getDate()).padStart(2, '0');
     const hours = String(date.getHours()).padStart(2, '0');
     const minutes = String(date.getMinutes()).padStart(2, '0');
+    const seconds = String(date.getSeconds()).padStart(2, '0');
     
-    return `${year}-${month}-${day}T${hours}:${minutes}`;
+    return `${year}-${month}-${day}T${hours}:${minutes}:${seconds}`;
   }
 
   useEffect(() => {
@@ -57,6 +67,22 @@ export default function VisitorForm() {
       clearInterval(interval);
     };
   }, []);
+
+  useEffect(() => {
+    const phoneDigits = formData.phone.replace(/\D/g, "");
+ 
+    if (phoneDigits.length === 10) {
+      setShowOtpButton(true);
+      setFormErrors1({ ...formErrors1, phone: "" });
+    } else if (phoneDigits.length > 0) {
+      setShowOtpButton(false);
+      setFormErrors1({
+        ...formErrors1,
+        phone:
+          phoneDigits.length < 10 ? "Please enter a 10-digit phone number" : "",
+      });
+    }
+  }, [formData.phone]);
 
   const startCamera = () => {
     setShowCamera(true);
@@ -82,6 +108,46 @@ export default function VisitorForm() {
     setFormData(prev => ({ ...prev, photo: null }));
   };
 
+  const handleSendOTP = async () => {
+    try {
+      const response = await fetch('http://localhost:5000/api/visitors/send-otp', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ phone: formData.phone }),
+      });
+
+      if (!response.ok) throw new Error('Failed to send OTP');
+      setOtpSent(true);
+      setShowOtpModal(true);
+      console.log('OTP sent successfully');
+    } catch (error) {
+      console.error('Error sending OTP:', error);
+    }
+  };
+
+  const handleVerifyOTP = async () => {
+    try {
+      const response = await fetch('http://localhost:5000/api/visitors/verify-otp', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ phone: formData.phone, otp: formData.otp }),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        setFormErrors1({ ...formErrors1, otp: errorData.error });
+        return;
+      }
+
+      setOtpVerified(true);
+      setFormErrors1({ ...formErrors1, otp: '' });
+      setShowOtpModal(false);
+      console.log('OTP verified successfully');
+    } catch (error) {
+      console.error('Error verifying OTP:', error);
+    }
+  };
+
   const handleInputChange = (e) => {
     const { name, value } = e.target;
     setFormData(prev => ({ ...prev, [name]: value }));
@@ -89,6 +155,21 @@ export default function VisitorForm() {
     // Clear error for this field when user starts typing
     if (formErrors[name]) {
       setFormErrors(prev => ({ ...prev, [name]: null }));
+    }
+
+    if (name === "phone") {
+      // Only allow numbers, format with parentheses and dashes
+      const phoneDigits = value.replace(/\D/g, "");
+      if (phoneDigits.length <= 10) {
+        let formattedPhone = phoneDigits;
+        setFormData({ ...formData, [name]: formattedPhone });
+      }
+    } else if (name === "otp") {
+      // Only allow numbers for OTP and limit to 6 digits
+      const otpDigits = value.replace(/\D/g, "");
+      if (otpDigits.length <= 6) {
+        setFormData({ ...formData, [name]: otpDigits });
+      }
     }
   };
 
@@ -158,22 +239,6 @@ export default function VisitorForm() {
         setTimeout(() => {
           const nextSlNumber = formData.slNumber + 1;
           setSlNumber(nextSlNumber);
-        //   setFormData({
-        //     dateTime: formatDateTime(new Date()),
-        //     slNumber: nextSlNumber,
-        //     name: '',
-        //     address: '',
-        //     designation: '',
-        //     phone: '',
-        //     email: '',
-        //     personToMeet: '',
-        //     purpose: '',
-        //     photo: null
-        //   });
-        //   setPhotoTaken(false);
-        //   setPhotoData(null);
-        //   setFormSubmitted(false);
-        //   setSubmitAnimation(false);
           navigate("/select");
         }, 3000);
       }, 1000);
@@ -355,27 +420,48 @@ export default function VisitorForm() {
                     </div>
                     
                     {/* Phone */}
-                    <div className="transition-all duration-300 hover:shadow-lg p-4 rounded-xl border border-gray-100 bg-white/80 backdrop-blur-sm animate-fade-in-up" style={{ animationDelay: '0.6s' }}>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Phone Number *</label>
-                    <div className="relative">
-                        <Phone className="absolute left-3 top-1/2 transform -translate-y-1/2 text-blue-500 h-5 w-5" />
-                        <input
-                        type="tel"
-                        name="phone"
-                        value={formData.phone}
-                        onChange={handleInputChange}
-                        className={`w-full pl-10 pr-4 py-3 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-300 ${
-                            formErrors.phone ? 'border-red-500 bg-red-50' : 'border-gray-200'
-                        }`}
-                        placeholder="Enter your phone number"
-                        />
-                    </div>
-                    {formErrors.phone && (
-                        <p className="mt-2 text-sm text-red-500 flex items-center animate-shake">
-                        <AlertCircle className="h-4 w-4 mr-1" />
-                        {formErrors.phone}
-                        </p>
-                    )}
+                    <div>
+                      <div
+                        className="transition-all duration-300 hover:shadow-lg p-4 rounded-xl border border-gray-100 bg-white/80 backdrop-blur-sm animate-fade-in-up"
+                        style={{ animationDelay: "0.6s" }}
+                      >
+                        <label className="block text-sm font-medium text-gray-700 mb-1">
+                          Phone Number *
+                        </label>
+                        <div className="relative">
+                          <Phone className="absolute left-3 top-1/2 transform -translate-y-1/2 text-blue-500 h-5 w-5" />
+                          <input
+                            type="tel"
+                            name="phone"
+                            value={formData.phone}
+                            onChange={handleInputChange}
+                            className={`w-full pl-10 pr-4 py-3 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-300 ${
+                              formErrors.phone
+                                ? "border-red-500 bg-red-50"
+                                : "border-gray-200"
+                            }`}
+                            placeholder="Enter your phone number"
+                          />
+                        </div>
+                        {formErrors.phone && (
+                          <p className="mt-2 text-sm text-red-500 flex items-center animate-shake">
+                            <AlertCircle className="h-4 w-4 mr-1" />
+                            {formErrors.phone}
+                          </p>
+                        )}
+                      </div>
+    
+                      {showOtpButton && (
+                        <button
+                          onClick={handleSendOTP}
+                          className={`mt-3 w-full bg-blue-500 hover:bg-blue-600 text-white font-medium py-2 px-4 rounded-lg transition-all duration-300 ${
+                            otpVerified ? "bg-green-500 hover:bg-green-600" : ""
+                          }`}
+                          disabled={otpVerified}
+                        >
+                          {otpVerified ? "Phone Verified ✓" : "Send OTP"}
+                        </button>
+                      )}
                     </div>
                     
                     {/* Email */}
@@ -553,6 +639,82 @@ export default function VisitorForm() {
             </p>
             </div>
         </div>
+
+        {/* OTP Modal */}
+        {showOtpModal && (
+          <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50">
+            <div className="bg-white rounded-xl p-6 max-w-md w-full animate-fade-in-up">
+              <div className="flex justify-between items-center mb-4">
+                <h3 className="text-lg font-semibold text-gray-900">
+                  Verify Phone Number
+                </h3>
+                <button
+                  onClick={() => setShowOtpModal(false)}
+                  className="text-gray-500 hover:text-gray-700"
+                >
+                  <X className="h-5 w-5" />
+                </button>
+              </div>
+  
+              <p className="text-sm text-gray-600 mb-4">
+                We've sent a 6-digit OTP to {formData.phone}. Please enter it
+                below to verify your phone number.
+              </p>
+  
+              <div className="mb-4">
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Enter OTP
+                </label>
+                <input
+                  type="text"
+                  name="otp"
+                  value={formData.otp}
+                  onChange={handleInputChange}
+                  className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-300 ${
+                    formErrors1.otp
+                      ? "border-red-500 bg-red-50"
+                      : "border-gray-200"
+                  }`}
+                  placeholder="Enter 6-digit OTP"
+                  maxLength="6"
+                />
+                {formErrors1.otp && (
+                  <p className="mt-1 text-sm text-red-500 flex items-center">
+                    <AlertCircle className="h-4 w-4 mr-1" />
+                    {formErrors1.otp}
+                  </p>
+                )}
+              </div>
+  
+              <button
+                onClick={handleVerifyOTP}
+                disabled={isVerifying || otpVerified}
+                className={`w-full py-3 px-4 rounded-lg font-medium text-white transition-all duration-300 ${
+                  otpVerified
+                    ? "bg-green-500"
+                    : isVerifying
+                    ? "bg-blue-400 cursor-not-allowed"
+                    : "bg-blue-500 hover:bg-blue-600"
+                }`}
+              >
+                {otpVerified
+                  ? "Verified Successfully ✓"
+                  : isVerifying
+                  ? "Verifying..."
+                  : "Verify OTP"}
+              </button>
+  
+              {otpSent && !otpVerified && (
+                <button
+                  onClick={handleSendOTP}
+                  className="w-full mt-2 py-2 px-4 rounded-lg font-medium text-blue-600 bg-transparent hover:bg-blue-50 transition-all duration-300"
+                >
+                  Resend OTP
+                </button>
+              )}
+            </div>
+          </div>
+        )}
     </div>
   );
 }

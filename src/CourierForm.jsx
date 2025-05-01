@@ -4,6 +4,7 @@ import image1 from './assets/LOGO_KRISTELLAR_WHITE.png'; // Replace with your lo
 import './VisitorForm.css'; // Import your CSS file for styles
 import { useNavigate } from 'react-router-dom';
 
+
 export default function CourierForm() {
   const navigate = useNavigate();
   const [serialnumber, setserialnumber] = useState(1);
@@ -81,6 +82,7 @@ export default function CourierForm() {
   };
 
 
+  //Otp verification
 
   const handleSubmit = (e) => {
     e.preventDefault();
