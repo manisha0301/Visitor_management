@@ -110,7 +110,7 @@ export default function VisitorForm() {
 
   const handleSendOTP = async () => {
     try {
-      const response = await fetch('http://localhost:5000/api/visitors/send-otp', {
+      const response = await fetch('http://localhost:5000/api/visitors/send', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ phone: formData.phone }),
@@ -127,7 +127,7 @@ export default function VisitorForm() {
 
   const handleVerifyOTP = async () => {
     try {
-      const response = await fetch('http://localhost:5000/api/visitors/verify-otp', {
+      const response = await fetch('http://localhost:5000/api/visitors/verify', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ phone: formData.phone, otp: formData.otp }),
