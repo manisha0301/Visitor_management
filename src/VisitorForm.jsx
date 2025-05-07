@@ -1,9 +1,11 @@
 import React, { useState, useEffect, useRef } from 'react';
 import Webcam from 'react-webcam';
-import { Camera, ArrowRight, CheckCircle, X, AlertCircle, Calendar, Hash, User, MapPin, Briefcase, Phone, Mail, Users, MessageSquare, RefreshCw } from 'lucide-react';
+import { Camera, ArrowRight, CheckCircle, X, AlertCircle, Calendar, Hash, User, MapPin, Briefcase, Phone, Mail, Users, MessageSquare, RefreshCw, Search } from 'lucide-react';
 import image1 from './assets/LOGO_KRISTELLAR_WHITE.png'; // Replace with your logo path
 import './VisitorForm.css'; // Import your CSS file for styles
 import { useNavigate } from 'react-router-dom';
+import { formatReadableDate } from './utils/formatDate';
+import axios from 'axios';
 
 export default function VisitorForm() {
   const navigate = useNavigate();
@@ -24,6 +26,12 @@ export default function VisitorForm() {
   const [showOtpModal, setShowOtpModal] = useState(false);
   const [otpVerified, setOtpVerified] = useState(false);
   const [isVerifying, setIsVerifying] = useState(false);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [autoFilledFields, setAutoFilledFields] = useState([]);
+  const [searchError, setSearchError] = useState('');
+  const [phone, setPhone] = useState('');
+  const [otp, setOtp] = useState('');
+
   
   const [formData, setFormData] = useState({
     dateTime: formatDateTime(new Date()),
@@ -70,19 +78,38 @@ export default function VisitorForm() {
 
   useEffect(() => {
     const phoneDigits = formData.phone.replace(/\D/g, "");
- 
+  
     if (phoneDigits.length === 10) {
       setShowOtpButton(true);
-      setFormErrors1({ ...formErrors1, phone: "" });
-    } else if (phoneDigits.length > 0) {
+      setFormErrors1(prev => ({ ...prev, phone: "" }));
+    } else {
       setShowOtpButton(false);
-      setFormErrors1({
-        ...formErrors1,
-        phone:
-          phoneDigits.length < 10 ? "Please enter a 10-digit phone number" : "",
-      });
+      if (phoneDigits.length > 0) {
+        setFormErrors1(prev => ({
+          ...prev,
+          phone: "Phone number must be exactly 10 digits"
+        }));
+      }
     }
   }, [formData.phone]);
+  
+
+  useEffect(() => {
+    navigator.mediaDevices.enumerateDevices().then((devices) => {
+      const videoDevices = devices.filter((device) => device.kind === "videoinput");
+      const externalCamera = videoDevices.find((device) =>
+        device.label.toLowerCase().includes("logitech") // Adjust as needed
+      );
+ 
+      if (externalCamera) {
+        setVideoConstraints({
+          deviceId: externalCamera.deviceId,
+          width: 1280,
+          height: 720,
+        });
+      }
+    });
+  }, []);
 
   const startCamera = () => {
     setShowCamera(true);
@@ -109,43 +136,58 @@ export default function VisitorForm() {
   };
 
   const handleSendOTP = async () => {
-    try {
-      const response = await fetch('http://localhost:5000/api/visitors/send', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ phone: formData.phone }),
-      });
+    // try {
+    //   const response = await fetch('http://localhost:5000/api/otp/send-otp', {
+    //     method: 'POST',
+    //     headers: { 'Content-Type': 'application/json' },
+    //     body: JSON.stringify({ phone: formData.phone }),
+    //   });
 
-      if (!response.ok) throw new Error('Failed to send OTP');
-      setOtpSent(true);
-      setShowOtpModal(true);
-      console.log('OTP sent successfully');
-    } catch (error) {
-      console.error('Error sending OTP:', error);
-    }
-  };
+    //   const data = await response.json();
+
+    //   if (response.ok) {
+        setOtpSent(true);
+        setShowOtpModal(true);
+        setFormErrors({ ...formErrors, phone: "" });
+        console.log('OTP sent to:', formData.phone);
+    //   } else {
+    //     setFormErrors1({ ...formErrors1, otp: data.error || "Failed to send OTP" });
+    //   }
+    // } catch (error) {
+    //   console.error("Error sending OTP:", error);
+    //   setFormErrors1({ ...formErrors1, otp: "Network error while sending OTP" });
+    // }
+};
 
   const handleVerifyOTP = async () => {
-    try {
-      const response = await fetch('http://localhost:5000/api/visitors/verify', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ phone: formData.phone, otp: formData.otp }),
-      });
-
-      if (!response.ok) {
-        const errorData = await response.json();
-        setFormErrors1({ ...formErrors1, otp: errorData.error });
-        return;
-      }
-
-      setOtpVerified(true);
-      setFormErrors1({ ...formErrors1, otp: '' });
-      setShowOtpModal(false);
-      console.log('OTP verified successfully');
-    } catch (error) {
-      console.error('Error verifying OTP:', error);
+    if (formData.otp.length !== 6) {
+      setFormErrors1({ ...formErrors1, otp: "Please enter a 6-digit OTP" });
+      return;
     }
+
+    setIsVerifying(true);
+    // try {
+    //   const response = await fetch('http://localhost:5000/api/otp/verify-otp', {
+    //     method: 'POST',
+    //     headers: { 'Content-Type': 'application/json' },
+    //     body: JSON.stringify({ phone: formData.phone, otp: formData.otp }),
+    //   });
+
+    //   const data = await response.json();
+
+    //   if (response.ok) {
+        setOtpVerified(true);
+        setFormErrors1({ ...formErrors1, otp: "" });
+        setTimeout(() => setShowOtpModal(false), 1000);
+    //   } else {
+    //     setFormErrors1({ ...formErrors1, otp: data.error || "Invalid OTP" });
+    //   }
+    // } catch (error) {
+    //   console.error("Error verifying OTP:", error);
+    //   setFormErrors1({ ...formErrors1, otp: "Network error during verification" });
+    // } finally {
+    //   setIsVerifying(false);
+    // }
   };
 
   const handleInputChange = (e) => {
@@ -158,17 +200,28 @@ export default function VisitorForm() {
     }
 
     if (name === "phone") {
-      // Only allow numbers, format with parentheses and dashes
       const phoneDigits = value.replace(/\D/g, "");
+  
       if (phoneDigits.length <= 10) {
-        let formattedPhone = phoneDigits;
-        setFormData({ ...formData, [name]: formattedPhone });
+        setFormData(prev => ({ ...prev, phone: phoneDigits }));
+        if (formErrors.phone) {
+          setFormErrors(prev => ({ ...prev, phone: null }));
+        }
+      } else {
+        setFormErrors(prev => ({
+          ...prev,
+          phone: "Phone number cannot exceed 10 digits"
+        }));
       }
     } else if (name === "otp") {
-      // Only allow numbers for OTP and limit to 6 digits
       const otpDigits = value.replace(/\D/g, "");
       if (otpDigits.length <= 6) {
-        setFormData({ ...formData, [name]: otpDigits });
+        setFormData(prev => ({ ...prev, [name]: otpDigits }));
+      }
+    } else {
+      setFormData(prev => ({ ...prev, [name]: value }));
+      if (formErrors[name]) {
+        setFormErrors(prev => ({ ...prev, [name]: null }));
       }
     }
   };
@@ -182,9 +235,9 @@ export default function VisitorForm() {
     
     if (!formData.phone.trim()) {
       errors.phone = "Phone number is required";
-    } else if (!/^\d{10,}$/.test(formData.phone.replace(/\D/g, ''))) {
-      errors.phone = "Please enter a valid phone number";
-    }
+    } else if (!/^\d{10}$/.test(formData.phone)) {
+      errors.phone = "Please enter a valid 10-digit phone number";
+    }  
     
     if (!formData.email.trim()) {
       errors.email = "Email is required";
@@ -202,6 +255,15 @@ export default function VisitorForm() {
 
   const handleSubmit = (e) => {
     e.preventDefault();
+
+    // Check if OTP is verified
+    if (!otpVerified) {
+      setFormErrors1((prev) => ({
+        ...prev,
+        otp: "Please verify the OTP before submitting the form",
+      }));
+      return;
+    }
     
     if (validateForm()) {
       //console.log("Form submitted:", formData);
@@ -223,10 +285,7 @@ export default function VisitorForm() {
       .catch(err => {
         console.error('Submission error:', err);
       });
-      
-      
-      // Save the current SL number to localStorage
-      localStorage.setItem('lastSlNumber', formData.slNumber);
+
       
       // Animate the submit button
       setSubmitAnimation(true);
@@ -237,8 +296,6 @@ export default function VisitorForm() {
         
         // Reset form after 3 seconds
         setTimeout(() => {
-          const nextSlNumber = formData.slNumber + 1;
-          setSlNumber(nextSlNumber);
           navigate("/select");
         }, 3000);
       }, 1000);
@@ -247,12 +304,41 @@ export default function VisitorForm() {
     }
   };
 
-  // Webcam configuration
-  const videoConstraints = {
+  const fetchVisitor = async () => {
+    try {
+      const response = await axios.get(`http://localhost:5000/api/visitors/search?query=${searchQuery}`);
+      const visitor = response.data;
+
+      if (!visitor) {
+        setSearchError('No visitor found with this phone number or email.');
+        setAutoFilledFields([]);
+        return;
+      }
+  
+      setFormData((prevData) => ({
+        ...prevData,
+        name: visitor.name || '',
+        email: visitor.email || '',
+        phone: visitor.phone || '',
+        address: visitor.address || '',
+        designation: visitor.designation || '',
+        // add more fields as needed
+      }));
+  
+      setAutoFilledFields(['name', 'email', 'phone', 'address', 'designation']); // dynamically include the fields you autofill
+      setSearchError('');
+    } catch (error) {
+      console.error("Error searching visitor:", error);
+      setSearchError('No visitor found with this phone number or email.');
+      setAutoFilledFields([]); // clear autofilled indicators if no match
+    }
+  };
+
+  const [videoConstraints, setVideoConstraints] = useState({
     width: 1280,
     height: 720,
-    facingMode: "user"
-  };
+    facingMode: "user", // default fallback
+  });
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-100 p-4 sm:p-6 md:p-8 overflow-hidden">
@@ -278,12 +364,7 @@ export default function VisitorForm() {
                 </h1>
                 </div>
                 <div className="text-white text-sm md:text-base font-medium bg-white/10 backdrop-blur-sm px-4 py-2 rounded-full shadow-inner animate-pulse-subtle">
-                {new Date().toLocaleDateString('en-US', { 
-                    weekday: 'long', 
-                    year: 'numeric', 
-                    month: 'long', 
-                    day: 'numeric' 
-                })}
+                {formatReadableDate(formData.dateTime)}
                 </div>
             </div>
             </div>
@@ -309,61 +390,64 @@ export default function VisitorForm() {
                 </div>
             ) : (
                 <form onSubmit={handleSubmit} className="space-y-6">
-                <div className="flex flex-col items-center justify-between mb-2">
-                    {/* <h2 className="text-xl md:text-2xl font-semibold text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-indigo-700 mb-4 animate-fade-in">
-                    Please fill in the details
-                    </h2> */}
-                    {/* <div className="h-1 w-20 bg-gradient-to-r from-blue-500 to-indigo-600 rounded-full animate-width-expand"></div> */}
-                </div>
-                
+                                
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    {/* Date and Time */}
-                    <div className="transition-all duration-300 hover:shadow-lg p-4 rounded-xl border border-gray-100 bg-white/80 backdrop-blur-sm animate-fade-in-up" style={{ animationDelay: '0.1s' }}>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Date and Time</label>
-                    <div className="relative">
-                        <Calendar className="absolute left-3 top-1/2 transform -translate-y-1/2 text-blue-500 h-5 w-5" />
-                        <input
-                        type="datetime-local"
-                        name="dateTime"
-                        value={formData.dateTime}
-                        onChange={handleInputChange}
-                        className="w-full pl-10 pr-4 py-3 border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-300"
-                        />
+                    {/* Search Bar */}
+                    <div
+                    className="transition-all duration-300 hover:shadow-lg p-4 rounded-xl border border-gray-100 bg-white/80 backdrop-blur-sm md:col-span-2 animate-fade-in-up"
+                    style={{ animationDelay: '0.9s' }}
+                  >
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Search</label>
+                    <div className="flex items-center border border-gray-200 rounded-lg overflow-hidden">
+                      <input
+                        type="text"
+                        placeholder="Search by Phone Number or Email ID..."
+                        value={searchQuery}
+                        onChange={(e) => setSearchQuery(e.target.value)}
+                        onKeyDown={(e) => {
+                          if (e.key === 'Enter') {
+                            fetchVisitor();
+                          }
+                        }}
+                        className="w-full px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      />
+                      <button
+                        onClick={fetchVisitor}
+                        className="p-2 text-blue-500 hover:text-blue-700 focus:outline-none"
+                      >
+                        <Search className="h-5 w-5" />
+                      </button>
                     </div>
-                    </div>
-                    
-                    {/* SL Number */}
-                    <div className="transition-all duration-300 hover:shadow-lg p-4 rounded-xl border border-gray-100 bg-white/80 backdrop-blur-sm animate-fade-in-up" style={{ animationDelay: '0.2s' }}>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">SL Number</label>
-                    <div className="relative">
-                        <Hash className="absolute left-3 top-1/2 transform -translate-y-1/2 text-blue-500 h-5 w-5" />
-                        <input
-                        type="number"
-                        name="slNumber"
-                        value={formData.slNumber}
-                        readOnly
-                        className="w-full pl-10 pr-4 py-3 border border-gray-200 rounded-lg bg-gray-50 text-gray-600 font-medium"
-                        />
-                    </div>
-                    </div>
-                    
+                    {searchError && (
+                      <p className="mt-2 text-sm text-red-500 flex items-center animate-shake">
+                        <AlertCircle className="h-4 w-4 mr-1" />
+                        {searchError}
+                      </p>
+                    )}
+
+                  </div>
+
                     {/* Name */}
                     <div className="transition-all duration-300 hover:shadow-lg p-4 rounded-xl border border-gray-100 bg-white/80 backdrop-blur-sm animate-fade-in-up" style={{ animationDelay: '0.3s' }}>
                     <label className="block text-sm font-medium text-gray-700 mb-1">Full Name *</label>
                     <div className="relative">
                         <User className="absolute left-3 top-1/2 transform -translate-y-1/2 text-blue-500 h-5 w-5" />
                         <input
-                        type="text"
-                        name="name"
-                        value={formData.name}
-                        onChange={handleInputChange}
-                        className={`w-full pl-10 pr-4 py-3 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-300 ${
-                            formErrors.name ? 'border-red-500 bg-red-50' : 'border-gray-200'
-                        }`}
-                        placeholder="Enter your full name"
+                          type="text"
+                          name="name"
+                          value={formData.name}
+                          onChange={handleInputChange}
+                          className={`w-full pl-10 pr-4 py-3 border rounded-lg focus:ring-2 transition-all duration-300
+                            ${!searchError && formErrors.name && !autoFilledFields.includes('name')  ? 'border-red-500 bg-red-50' :
+                              autoFilledFields.includes('name') ? 'border-yellow-400 bg-yellow-50' :
+                              'border-gray-200'
+                            }
+                          `}
+                          placeholder="Enter your full name"
                         />
+
                     </div>
-                    {formErrors.name && (
+                    {formErrors.name && !autoFilledFields.includes('name') && !searchError && (
                         <p className="mt-2 text-sm text-red-500 flex items-center animate-shake">
                         <AlertCircle className="h-4 w-4 mr-1" />
                         {formErrors.name}
@@ -382,12 +466,14 @@ export default function VisitorForm() {
                         value={formData.address}
                         onChange={handleInputChange}
                         className={`w-full pl-10 pr-4 py-3 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-300 ${
-                            formErrors.address ? 'border-red-500 bg-red-50' : 'border-gray-200'
+                            !searchError && formErrors.address && !autoFilledFields.includes('address') ? 'border-red-500 bg-red-50' :
+                              autoFilledFields.includes('address') ? 'border-yellow-400 bg-yellow-50' :
+                              'border-gray-200'
                         }`}
                         placeholder="Enter your address"
                         />
                     </div>
-                    {formErrors.address && (
+                    {formErrors.address && !autoFilledFields.includes('address') && !searchError && (
                         <p className="mt-2 text-sm text-red-500 flex items-center animate-shake">
                         <AlertCircle className="h-4 w-4 mr-1" />
                         {formErrors.address}
@@ -406,12 +492,14 @@ export default function VisitorForm() {
                         value={formData.designation}
                         onChange={handleInputChange}
                         className={`w-full pl-10 pr-4 py-3 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-300 ${
-                            formErrors.designation ? 'border-red-500 bg-red-50' : 'border-gray-200'
+                            !searchError && formErrors.designation && !autoFilledFields.includes('designation') ? 'border-red-500 bg-red-50' :
+                              autoFilledFields.includes('designation') ? 'border-yellow-400 bg-yellow-50' :
+                              'border-gray-200'
                         }`}
                         placeholder="Enter your designation"
                         />
                     </div>
-                    {formErrors.designation && (
+                    {formErrors.designation && !autoFilledFields.includes('designation') && !searchError &&  (
                         <p className="mt-2 text-sm text-red-500 flex items-center animate-shake">
                         <AlertCircle className="h-4 w-4 mr-1" />
                         {formErrors.designation}
@@ -433,17 +521,18 @@ export default function VisitorForm() {
                           <input
                             type="tel"
                             name="phone"
+                            maxLength={10}
                             value={formData.phone}
                             onChange={handleInputChange}
                             className={`w-full pl-10 pr-4 py-3 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-300 ${
-                              formErrors.phone
-                                ? "border-red-500 bg-red-50"
-                                : "border-gray-200"
+                              !searchError && formErrors.phone && !autoFilledFields.includes('phone') ? 'border-red-500 bg-red-50' :
+                              autoFilledFields.includes('phone') ? 'border-yellow-400 bg-yellow-50' :
+                              'border-gray-200'
                             }`}
                             placeholder="Enter your phone number"
                           />
                         </div>
-                        {formErrors.phone && (
+                        {formErrors.phone && !autoFilledFields.includes('phone') && !searchError && (
                           <p className="mt-2 text-sm text-red-500 flex items-center animate-shake">
                             <AlertCircle className="h-4 w-4 mr-1" />
                             {formErrors.phone}
@@ -451,8 +540,10 @@ export default function VisitorForm() {
                         )}
                       </div>
     
-                      {showOtpButton && (
+                      {showOtpButton  && (
+                        <div>
                         <button
+                          type='button'
                           onClick={handleSendOTP}
                           className={`mt-3 w-full bg-blue-500 hover:bg-blue-600 text-white font-medium py-2 px-4 rounded-lg transition-all duration-300 ${
                             otpVerified ? "bg-green-500 hover:bg-green-600" : ""
@@ -461,6 +552,13 @@ export default function VisitorForm() {
                         >
                           {otpVerified ? "Phone Verified ✓" : "Send OTP"}
                         </button>
+                        {formErrors1.otp && !otpVerified && (
+                          <p className="mt-1 text-sm text-red-500 flex items-center">
+                            <AlertCircle className="h-4 w-4 mr-1" />
+                            {formErrors1.otp}
+                          </p>
+                        )}
+                        </div>
                       )}
                     </div>
                     
@@ -475,12 +573,14 @@ export default function VisitorForm() {
                         value={formData.email}
                         onChange={handleInputChange}
                         className={`w-full pl-10 pr-4 py-3 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-300 ${
-                            formErrors.email ? 'border-red-500 bg-red-50' : 'border-gray-200'
+                            !searchError && formErrors.email && !autoFilledFields.includes('email') ? 'border-red-500 bg-red-50' :
+                              autoFilledFields.includes('email') ? 'border-yellow-400 bg-yellow-50' :
+                              'border-gray-200'
                         }`}
                         placeholder="Enter your email address"
                         />
                     </div>
-                    {formErrors.email && (
+                    {formErrors.email && !autoFilledFields.includes('email') && !searchError && (
                         <p className="mt-2 text-sm text-red-500 flex items-center animate-shake">
                         <AlertCircle className="h-4 w-4 mr-1" />
                         {formErrors.email}
@@ -499,12 +599,14 @@ export default function VisitorForm() {
                         value={formData.personToMeet}
                         onChange={handleInputChange}
                         className={`w-full pl-10 pr-4 py-3 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-300 ${
-                            formErrors.personToMeet ? 'border-red-500 bg-red-50' : 'border-gray-200'
+                            !searchError && formErrors.email && !autoFilledFields.includes('name') ? 'border-red-500 bg-red-50' :
+                              autoFilledFields.includes('') ? 'border-yellow-400 bg-yellow-50' :
+                              'border-gray-200'
                         }`}
                         placeholder="Enter person's name"
                         />
                     </div>
-                    {formErrors.personToMeet && (
+                    {formErrors.personToMeet && !autoFilledFields.includes('name')  && !searchError && (
                         <p className="mt-2 text-sm text-red-500 flex items-center animate-shake">
                         <AlertCircle className="h-4 w-4 mr-1" />
                         {formErrors.personToMeet}
@@ -523,12 +625,14 @@ export default function VisitorForm() {
                         onChange={handleInputChange}
                         rows="3"
                         className={`w-full pl-10 pr-4 py-3 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-300 ${
-                            formErrors.purpose ? 'border-red-500 bg-red-50' : 'border-gray-200'
+                            !searchError && formErrors.email && !autoFilledFields.includes('name') ? 'border-red-500 bg-red-50' :
+                              autoFilledFields.includes('') ? 'border-yellow-400 bg-yellow-50' :
+                              'border-gray-200'
                         }`}
                         placeholder="Describe the purpose of your visit"
                         ></textarea>
                     </div>
-                    {formErrors.purpose && (
+                    {formErrors.purpose && !autoFilledFields.includes('name') && !searchError && (
                         <p className="mt-2 text-sm text-red-500 flex items-center animate-shake">
                         <AlertCircle className="h-4 w-4 mr-1" />
                         {formErrors.purpose}
@@ -602,7 +706,7 @@ export default function VisitorForm() {
                         </button>
                         )}
                         
-                        {formErrors.photo && !photoTaken && (
+                        {formErrors.photo && !photoTaken && !autoFilledFields.includes('name') && !searchError && (
                         <p className="mt-2 text-sm text-red-500 flex items-center animate-shake">
                             <AlertCircle className="h-4 w-4 mr-1" />
                             {formErrors.photo}
@@ -687,6 +791,7 @@ export default function VisitorForm() {
               </div>
   
               <button
+                type='button'
                 onClick={handleVerifyOTP}
                 disabled={isVerifying || otpVerified}
                 className={`w-full py-3 px-4 rounded-lg font-medium text-white transition-all duration-300 ${

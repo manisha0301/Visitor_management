@@ -44,13 +44,13 @@ import { formatReadableDate } from './utils/formatDate';
             <thead className="bg-gray-50">
               <tr>
                 {[
-                  'Date & Time',
                   'Sl. No.',
                   'Visitor Name',
                   'Courier Name',
                   'Courier ID',
                   'Phone',
                   'Person to Deliver',
+                  'Date & Time',
                 ].map((heading) => (
                   <th
                     key={heading}
@@ -64,13 +64,13 @@ import { formatReadableDate } from './utils/formatDate';
             <tbody className="bg-white divide-y divide-gray-200">
               {filteredData.map((item, i) => (
                 <tr key={i}>
-                  <td className="px-6 py-4 whitespace-nowrap">{formatReadableDate(item.datetime)}</td>
-                  <td className="px-6 py-4 whitespace-nowrap">{item.serialnumber}</td>
+                  <td className="px-6 py-4 whitespace-nowrap">{item.id}</td>
                   <td className="px-6 py-4 whitespace-nowrap">{item.name}</td>
                   <td className="px-6 py-4 whitespace-nowrap">{item.couriername}</td>
                   <td className="px-6 py-4 whitespace-nowrap">{item.courierid}</td>
                   <td className="px-6 py-4 whitespace-nowrap">{item.phone}</td>
                   <td className="px-6 py-4 whitespace-nowrap">{item.persontodeliver}</td>
+                  <td className="px-6 py-4 whitespace-nowrap">{formatReadableDate(item.datetime)}</td>
                 </tr>
               ))}
               {filteredData.length === 0 && (

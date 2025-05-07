@@ -3,6 +3,7 @@ import { Users, Package, Bell, Settings, LogOut, Search, Menu, X } from 'lucide-
 import VD from './VD';
 import CD from './CD';
 import image1 from './assets/K_logo3.png'; // Adjust the path as necessary
+import Administration from './Administration';
 
 const Dashboard = () => {
   const [activeTab, setActiveTab] = useState('visitorsDashboard');
@@ -52,24 +53,10 @@ const Dashboard = () => {
               {isMobileMenuOpen ? <X className="h-6 w-6" /> : <Menu className="h-6 w-6" />}
             </button>
             
-            {/* <h1 className="text-xl font-bold text-blue-600 ">Kristellar Aerospace</h1> */}
             <img src={image1} alt="Logo" className="lg:ml-10 h-16 lg:h-20 w-full " />
           </div>
           
-          {/* <div className="hidden md:flex items-center bg-gray-100 rounded-lg px-3 py-2 flex-1 max-w-lg mx-8">
-            <Search className="h-5 w-5 text-gray-500 mr-2" />
-            <input
-              type="text"
-              placeholder="Search..."
-              className="bg-transparent border-0 focus:outline-none flex-1 text-gray-700"
-            />
-          </div> */}
-          
-          <div className="flex items-center space-x-4">
-        {/* <div className="h-9 w-9 rounded-full bg-blue-600 flex items-center justify-center text-white font-medium">
-              KA
-            </div> */}
-            
+          <div className="flex items-center space-x-4">            
             <button className="hidden md:flex items-center space-x-2 px-4 py-2 text-white bg-blue-600 rounded-lg hover:bg-blue-700 transition-colors shadow-sm">
               <LogOut className="h-5 w-5" />
               <span>Sign Out</span>
@@ -115,13 +102,21 @@ const Dashboard = () => {
                 <span>Courier Dashboard</span>
               </button>
               
+              <button 
+                onClick={() => handleNavigation('administration')}
+                className={`flex items-center px-4 py-3 rounded-lg mb-2 ${
+                  activeTab === 'administration' 
+                    ? 'bg-blue-900 shadow-lg' 
+                    : 'hover:bg-blue-700'
+                }`}
+              >
+                <Package className="mr-3 h-5 w-5" />
+                <span>Administration</span>
+              </button>
+              
               <div className="flex-grow"></div>
               
               <div className="border-t border-blue-700 pt-4">
-                {/* <button className="flex items-center w-full px-4 py-2 hover:bg-blue-700 rounded-lg mb-2">
-                  <Settings className="mr-3 h-5 w-5" />
-                  <span>Settings</span>
-                </button> */}
                 <button className="flex items-center w-full px-4 py-2 hover:bg-blue-700 rounded-lg">
                   <LogOut className="mr-3 h-5 w-5" />
                   <span>Sign Out</span>
@@ -132,7 +127,7 @@ const Dashboard = () => {
         )}
         
         <main className="flex-1 overflow-auto">
-          <div className="p-6 mx-auto max-w-7xl">
+          <div className="p-6 mx-auto px-20">
             {/* Welcome Banner */}
             <div className="mb-6 bg-gradient-to-r from-blue-600 to-blue-800 rounded-xl p-6 text-white shadow-lg">
               <div className="flex flex-col md:flex-row justify-between items-start md:items-center">
@@ -181,12 +176,27 @@ const Dashboard = () => {
                   <span>Courier Dashboard</span>
                 </div>
               </button>
+
+              <button 
+                onClick={() => handleNavigation('administration')}
+                className={`rounded-lg px-5 py-3 font-medium transition-all duration-200 ${
+                  activeTab === 'administration' 
+                    ? 'bg-blue-600 text-white shadow-md' 
+                    : 'bg-white border border-gray-200 text-gray-700 hover:border-blue-400'
+                }`}
+              >
+                <div className="flex items-center">
+                  <Package className="mr-2 h-5 w-5" />
+                  <span>Administration</span>
+                </div>
+              </button>
             </div>
             
             {/* Dashboard Content */}
             <div className="bg-white rounded-xl shadow-sm p-6">
               {activeTab === 'visitorsDashboard' && <VD />}
               {activeTab === 'courierDashboard' && <CD />}
+              {activeTab === 'administration' && <Administration />}
             </div>
           </div>
         </main>

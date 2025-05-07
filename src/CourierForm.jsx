@@ -3,6 +3,7 @@ import { ArrowRight, CheckCircle, X, AlertCircle, Calendar, Hash, User, MapPin, 
 import image1 from './assets/LOGO_KRISTELLAR_WHITE.png'; // Replace with your logo path
 import './VisitorForm.css'; // Import your CSS file for styles
 import { useNavigate } from 'react-router-dom';
+import { formatReadableDate } from './utils/formatDate';
 
 
 export default function CourierForm() {
@@ -123,43 +124,6 @@ export default function CourierForm() {
     }
   };
 
-
-
-  // const handleSubmit = (e) => {
-  //   e.preventDefault();
-    
-  //   if (validateForm()) {
-  //     console.log("Form submitted:", formData);
-      
-  //     // Save the current SL number to localStorage
-  //     localStorage.setItem('lastserialnumber', formData.serialnumber);
-      
-  //     // Animate the submit button
-  //     setSubmitAnimation(true);
-      
-  //     // Show success message
-  //     setTimeout(() => {
-  //       setFormSubmitted(true);
-        
-  //       // Reset form after 3 seconds
-  //       setTimeout(() => {
-  //         const nextserialnumber = formData.serialnumber + 1;
-  //         setserialnumber(nextserialnumber);
-  //         navigate("/select");
-  //       }, 3000);
-  //     }, 1000);
-  //   } else {
-  //     console.log("Form has errors");
-  //   }
-  // };
-
-  // // Webcam configuration
-  // const videoConstraints = {
-  //   width: 1280,
-  //   height: 720,
-  //   facingMode: "user"
-  // };
-
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-100 p-4 sm:p-6 md:p-8 overflow-hidden">
         {/* Animated Background Elements */}
@@ -184,12 +148,7 @@ export default function CourierForm() {
                 </h1>
                 </div>
                 <div className="text-white text-sm md:text-base font-medium bg-white/10 backdrop-blur-sm px-4 py-2 rounded-full shadow-inner animate-pulse-subtle">
-                {new Date().toLocaleDateString('en-US', { 
-                    weekday: 'long', 
-                    year: 'numeric', 
-                    month: 'long', 
-                    day: 'numeric' 
-                })}
+                {formatReadableDate(formData.dateTime)}
                 </div>
             </div>
             </div>
