@@ -10,6 +10,7 @@ const Dashboard = () => {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [greeting, setGreeting] = useState('');
   const [currentTime, setCurrentTime] = useState('');
+  const [role, setRole] = useState('');
 
   // Handle time-based greeting and current time
   useEffect(() => {
@@ -33,6 +34,13 @@ const Dashboard = () => {
     updateTimeInfo();
     const interval = setInterval(updateTimeInfo, 60000);
     return () => clearInterval(interval);
+  }, []);
+
+  useEffect(() => {
+    const storedRole = localStorage.getItem('role');
+    if (storedRole) {
+      setRole(storedRole);
+    }
   }, []);
 
   const handleNavigation = (path) => {
@@ -101,7 +109,7 @@ const Dashboard = () => {
                 <Package className="mr-3 h-5 w-5" />
                 <span>Courier Dashboard</span>
               </button>
-              
+              {role === 'Admin' && (
               <button 
                 onClick={() => handleNavigation('administration')}
                 className={`flex items-center px-4 py-3 rounded-lg mb-2 ${
@@ -113,6 +121,7 @@ const Dashboard = () => {
                 <Package className="mr-3 h-5 w-5" />
                 <span>Administration</span>
               </button>
+              )}
               
               <div className="flex-grow"></div>
               
@@ -177,6 +186,7 @@ const Dashboard = () => {
                 </div>
               </button>
 
+              {role === 'Admin' && (
               <button 
                 onClick={() => handleNavigation('administration')}
                 className={`rounded-lg px-5 py-3 font-medium transition-all duration-200 ${
@@ -190,6 +200,7 @@ const Dashboard = () => {
                   <span>Administration</span>
                 </div>
               </button>
+              )}
             </div>
             
             {/* Dashboard Content */}

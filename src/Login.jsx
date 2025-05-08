@@ -8,16 +8,32 @@ const Login = () => {
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
 
-  const handleLogin = (e) => {
+  const handleLogin = async (e) => {
     e.preventDefault();
     setIsLoading(true);
-    
-    // Simulate API call with timeout
-    setTimeout(() => {
+  
+    try {
+      const res = await fetch('http://localhost:5000/api/login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(form)
+      });
+  
+      const data = await res.json();
+      if (res.ok) {
+      // You can store user in localStorage or context
+        localStorage.setItem('role', data.user.role);
+        navigate('/dashboard');
+      } else {
+        alert(data.error);
+      }
+    } catch (error) {
+      alert('Login failed.');
+    } finally {
       setIsLoading(false);
-      navigate('/dashboard');
-    }, 1500);
+    }
   };
+  
 
   return (
     <div className="flex min-h-screen items-center justify-center bg-gradient-to-br from-blue-100 to-teal-100 p-4">

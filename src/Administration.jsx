@@ -1,36 +1,76 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { ChevronDown } from 'lucide-react';
+import { formatReadableDate } from './utils/formatDate';
 
 const Administration = () => {
   const [activeTab, setActiveTab] = useState('view');
-  const [users, setUsers] = useState([
-    { id: 1, name: 'John Doe', username: 'johndoe', role: 'Admin', createdAt: '2025-04-28' },
-    { id: 2, name: 'Jane Smith', username: 'janesmith', role: 'User', createdAt: '2025-04-27' },
-    { id: 3, name: 'Mike Johnson', username: 'mikejohnson', role: 'Editor', createdAt: '2025-04-26' },
-    { id: 4, name: 'Emily Brown', username: 'emilybrown', role: 'User', createdAt: '2025-04-25' },
-    { id: 5, name: 'Chris Lee', username: 'chrislee', role: 'Admin', createdAt: '2025-04-24' },
-  ]);
+  // const [users, setUsers] = useState([
+  //   { id: 1, name: 'John Doe', username: 'johndoe', role: 'Admin', createdAt: '2025-04-28' },
+  //   { id: 2, name: 'Jane Smith', username: 'janesmith', role: 'User', createdAt: '2025-04-27' },
+  //   { id: 3, name: 'Mike Johnson', username: 'mikejohnson', role: 'Editor', createdAt: '2025-04-26' },
+  //   { id: 4, name: 'Emily Brown', username: 'emilybrown', role: 'User', createdAt: '2025-04-25' },
+  //   { id: 5, name: 'Chris Lee', username: 'chrislee', role: 'Admin', createdAt: '2025-04-24' },
+  // ]);
+  const [users, setUsers] = useState([]);
   const [newUser, setNewUser] = useState({ name: '', username: '', password: '', role: 'User' });
   const [selectedIds, setSelectedIds] = useState([]);
 
-  const handleCreateUser = (e) => {
-    e.preventDefault();
-    const newEntry = {
-      id: users.length + 1,
-      name: newUser.name,
-      username: newUser.username,
-      role: newUser.role,
-      createdAt: new Date().toISOString().split('T')[0],
-    };
-    setUsers([...users, newEntry]);
-    setNewUser({ name: '', username: '', password: '', role: 'User' });
-    setActiveTab('view');
-  };
+  useEffect(() => {
+    fetch('http://localhost:5000/api/users')
+      .then(res => res.json())
+      .then(data => setUsers(data))
+      .catch(err => console.error('Failed to fetch users:', err));
+  }, []);
 
-  const handleDeleteUsers = () => {
-    setUsers(users.filter(user => !selectedIds.includes(user.id)));
-    setSelectedIds([]);
+  const handleCreateUser = async (e) => {
+    e.preventDefault();
+  
+    try {
+      const response = await fetch('http://localhost:5000/api/register', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(newUser)
+      });
+  
+      if (response.ok) {
+        const createdUser = await response.json();
+        setUsers(prev => [...prev, {
+          id: createdUser.id,
+          name: createdUser.name,
+          username: createdUser.username,
+          role: createdUser.role,
+          createdAt: createdUser.created_at || new Date().toISOString().split('T')[0],
+        }]);
+        setNewUser({ name: '', username: '', password: '', role: 'User' });
+        setActiveTab('view');
+      } else {
+        console.error('User creation failed.');
+      }
+    } catch (err) {
+      console.error('Error creating user:', err);
+    }
   };
+  
+
+  const handleDeleteUsers = async () => {
+    try {
+      const response = await fetch('http://localhost:5000/api/users', {
+        method: 'DELETE',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ ids: selectedIds })
+      });
+  
+      if (response.ok) {
+        setUsers(prev => prev.filter(user => !selectedIds.includes(user.id)));
+        setSelectedIds([]);
+      } else {
+        console.error('Failed to delete users');
+      }
+    } catch (err) {
+      console.error('Error deleting users:', err);
+    }
+  };
+  
 
   const toggleCheckbox = (id) => {
     if (selectedIds.includes(id)) {
@@ -41,7 +81,7 @@ const Administration = () => {
   };
 
   return (
-    <div className="bg-white shadow-lg rounded-xl p-8 max-w-full">
+    <div className="bg-white rounded-xl p-4 max-w-full">
       <div className="flex justify-between items-center mb-8">
         <h2 className="text-2xl font-bold text-gray-900 mb-6">Administration Panel</h2>
         {/* Dropdown */}      
@@ -82,7 +122,7 @@ const Administration = () => {
                     <td className="px-6 py-4 whitespace-nowrap">{user.name}</td>
                     <td className="px-6 py-4 whitespace-nowrap">{user.username}</td>
                     <td className="px-6 py-4 whitespace-nowrap">{user.role}</td>
-                    <td className="px-6 py-4 whitespace-nowrap">{user.createdAt}</td>
+                    <td className="px-6 py-4 whitespace-nowrap">{formatReadableDate(user.created_at)}</td>
                   </tr>
                 ))}
               </tbody>
