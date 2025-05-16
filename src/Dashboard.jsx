@@ -4,8 +4,10 @@ import VD from './VD';
 import CD from './CD';
 import image1 from './assets/K_logo3.png'; // Adjust the path as necessary
 import Administration from './Administration';
+import { useNavigate } from 'react-router-dom';
 
 const Dashboard = () => {
+  const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState('visitorsDashboard');
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [greeting, setGreeting] = useState('');
@@ -43,10 +45,31 @@ const Dashboard = () => {
     }
   }, []);
 
+  useEffect(() => {
+    const isLoggedIn = sessionStorage.getItem('isLoggedIn');
+    if (!isLoggedIn) {
+      navigate('/login');
+    }
+  }, [navigate]);
+
+  useEffect(() => {
+  if (sessionStorage.getItem('isLoggedIn') !== 'true') {
+    navigate('/login');
+  }
+}, []);
+
   const handleNavigation = (path) => {
     setActiveTab(path);
     setIsMobileMenuOpen(false);
   };
+
+  const handleSignOut = () => {
+  sessionStorage.removeItem('isLoggedIn');
+  sessionStorage.setItem('loggedOut', 'true');
+  navigate('/login');
+};
+
+
 
   return (
     <div className="flex h-screen bg-gray-50">      
@@ -65,7 +88,9 @@ const Dashboard = () => {
           </div>
           
           <div className="flex items-center space-x-4">            
-            <button className="hidden md:flex items-center space-x-2 px-4 py-2 text-white bg-blue-600 rounded-lg hover:bg-blue-700 transition-colors shadow-sm">
+            <button
+              onClick={handleSignOut} 
+              className="hidden md:flex items-center space-x-2 px-4 py-2 text-white bg-blue-600 rounded-lg hover:bg-blue-700 transition-colors shadow-sm">
               <LogOut className="h-5 w-5" />
               <span>Sign Out</span>
             </button>
@@ -126,7 +151,9 @@ const Dashboard = () => {
               <div className="flex-grow"></div>
               
               <div className="border-t border-blue-700 pt-4">
-                <button className="flex items-center w-full px-4 py-2 hover:bg-blue-700 rounded-lg">
+                <button 
+                  onClick={handleSignOut}
+                  className="flex items-center w-full px-4 py-2 hover:bg-blue-700 rounded-lg">
                   <LogOut className="mr-3 h-5 w-5" />
                   <span>Sign Out</span>
                 </button>

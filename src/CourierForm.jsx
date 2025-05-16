@@ -4,6 +4,7 @@ import image1 from './assets/LOGO_KRISTELLAR_WHITE.png'; // Replace with your lo
 import './VisitorForm.css'; // Import your CSS file for styles
 import { useNavigate } from 'react-router-dom';
 import { formatReadableDate } from './utils/formatDate';
+import AnalogClock from './AnalogClock';
 
 
 export default function CourierForm() {
@@ -34,6 +35,16 @@ export default function CourierForm() {
     return `${year}-${month}-${day}T${hours}:${minutes}:${seconds}`;
   }
 
+  function formatReadableDate(dateString) {
+    const date = new Date(dateString);
+    return date.toLocaleDateString('en-US', {
+      weekday: 'long',
+      year: 'numeric',
+      month: 'long',
+      day: 'numeric'
+    });
+  }
+
   useEffect(() => {
     // Check for saved SL number in localStorage
     const savedserialnumber = localStorage.getItem('lastserialnumber');
@@ -46,7 +57,7 @@ export default function CourierForm() {
     // Update date and time every minute
     const interval = setInterval(() => {
       setFormData(prev => ({ ...prev, dateTime: formatDateTime(new Date()) }));
-    }, 60000);
+    }, 1000);
     
     return () => {
       clearInterval(interval);
@@ -147,8 +158,9 @@ export default function CourierForm() {
                     COURIER DETAILS
                 </h1>
                 </div>
-                <div className="text-white text-sm md:text-base font-medium bg-white/10 backdrop-blur-sm px-4 py-2 rounded-full shadow-inner animate-pulse-subtle">
-                {formatReadableDate(formData.dateTime)}
+                <div className="text-white text-sm md:text-base font-medium px-4 py-2 rounded-full animate-pulse-subtle flex items-center gap-4">
+                  <span>{formatReadableDate(formData.dateTime)}</span>
+                  <AnalogClock dateTime={formData.dateTime} />
                 </div>
             </div>
             </div>
@@ -170,6 +182,7 @@ export default function CourierForm() {
                     <RefreshCw className="h-4 w-4 mr-2" />
                     New Registration
                     </button>
+
                 </div>
                 </div>
             ) : (
@@ -181,37 +194,7 @@ export default function CourierForm() {
                     {/* <div className="h-1 w-20 bg-gradient-to-r from-blue-500 to-indigo-600 rounded-full animate-width-expand"></div> */}
                 </div>
                 
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    {/* Date and Time */}
-                    <div className="transition-all duration-300 hover:shadow-lg p-4 rounded-xl border border-gray-100 bg-white/80 backdrop-blur-sm animate-fade-in-up" style={{ animationDelay: '0.1s' }}>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Date and Time</label>
-                    <div className="relative">
-                        <Calendar className="absolute left-3 top-1/2 transform -translate-y-1/2 text-blue-500 h-5 w-5" />
-                        <input
-                        type="datetime-local"
-                        name="dateTime"
-                        value={formData.dateTime}
-                        onChange={handleInputChange}
-                        className="w-full pl-10 pr-4 py-3 border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-300"
-                        />
-                    </div>
-                    </div>
-                    
-                    {/* SL Number */}
-                    <div className="transition-all duration-300 hover:shadow-lg p-4 rounded-xl border border-gray-100 bg-white/80 backdrop-blur-sm animate-fade-in-up" style={{ animationDelay: '0.2s' }}>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">SL Number</label>
-                    <div className="relative">
-                        <Hash className="absolute left-3 top-1/2 transform -translate-y-1/2 text-blue-500 h-5 w-5" />
-                        <input
-                        type="number"
-                        name="serialnumber"
-                        value={formData.serialnumber}
-                        readOnly
-                        className="w-full pl-10 pr-4 py-3 border border-gray-200 rounded-lg bg-gray-50 text-gray-600 font-medium"
-                        />
-                    </div>
-                    </div>
-                    
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">                    
                     {/* Name */}
                     <div className="transition-all duration-300 hover:shadow-lg p-4 rounded-xl border border-gray-100 bg-white/80 backdrop-blur-sm animate-fade-in-up" style={{ animationDelay: '0.3s' }}>
                     <label className="block text-sm font-medium text-gray-700 mb-1">Name of the Delivery Man*</label>
@@ -356,7 +339,7 @@ export default function CourierForm() {
             <div className="px-6 py-4 bg-gradient-to-r from-gray-50 to-gray-100 text-center border-t border-gray-200">
             <p className="text-sm text-gray-600 flex items-center justify-center">
                 {/* <Shield className="h-4 w-4 mr-2 text-blue-500" /> */}
-                © {new Date().getFullYear()} Your Company Name. All rights reserved.
+                © 2021 Kristellar Aerospace. All rights reserved.
             </p>
             </div>
         </div>

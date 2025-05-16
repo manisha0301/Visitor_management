@@ -1,5 +1,5 @@
 import { useNavigate } from 'react-router-dom';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { EyeIcon, EyeOffIcon, UserIcon, LockIcon } from 'lucide-react';
 
 const Login = () => {
@@ -7,6 +7,16 @@ const Login = () => {
   const [form, setForm] = useState({ username: '', password: '' });
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+  const [showPopup, setShowPopup] = useState(false);
+
+  useEffect(() => {
+    // Show popup if coming from logout
+    if (sessionStorage.getItem('loggedOut') === 'true') {
+      setShowPopup(true);
+      sessionStorage.removeItem('loggedOut');
+      setTimeout(() => setShowPopup(false), 3000);
+    }
+  }, []);
 
   const handleLogin = async (e) => {
     e.preventDefault();
@@ -23,6 +33,7 @@ const Login = () => {
       if (res.ok) {
       // You can store user in localStorage or context
         localStorage.setItem('role', data.user.role);
+        sessionStorage.setItem('isLoggedIn', 'true');
         navigate('/dashboard');
       } else {
         alert(data.error);
@@ -37,6 +48,11 @@ const Login = () => {
 
   return (
     <div className="flex min-h-screen items-center justify-center bg-gradient-to-br from-blue-100 to-teal-100 p-4">
+      {showPopup && (
+        <div className="absolute top-4 bg-green-500 text-white py-2 px-4 rounded shadow-lg z-50">
+          Successfully Signed Out
+        </div>
+      )}
       <div className="w-full max-w-md overflow-hidden rounded-2xl bg-white shadow-xl">
         <div className="relative overflow-hidden bg-teal-600 p-8">
           <div className="absolute -top-24 -right-24 h-40 w-40 rounded-full bg-teal-500 opacity-50"></div>

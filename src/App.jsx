@@ -6,6 +6,7 @@ import SplashScreen from "./SplashScreen";
 import SelectionScreen from "./SelectionScreen";
 import Login from "./Login";
 import Dashboard from "./Dashboard";
+import ProtectedRoute from "./ProtectedRoute";
 
 function App() {
   return (
@@ -16,7 +17,7 @@ function App() {
         <Route path="/visitor" element={<VisitorForm />} />
         <Route path="/courier" element={<CourierForm />} />
         <Route path="/login" element={<Login />} />
-        <Route path="/dashboard" element={<Dashboard />} />
+        <Route path="/dashboard" element={<ProtectedRoute> <Dashboard /> </ProtectedRoute>} />
       </Routes>
     </Router>
   );

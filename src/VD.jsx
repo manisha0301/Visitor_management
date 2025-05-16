@@ -51,6 +51,8 @@ import { formatReadableDate } from './utils/formatDate';
                   'Person to Meet',
                   'Purpose',
                   'Date & Time',
+                  'pincode',
+                  'device',
                   'Photo',
                 ].map((heading) => (
                   <th key={heading} className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
@@ -71,6 +73,8 @@ import { formatReadableDate } from './utils/formatDate';
                   <td className="px-6 py-4 whitespace-nowrap">{visitor.persontomeet}</td>
                   <td className="px-6 py-4 whitespace-nowrap">{visitor.purpose}</td>
                   <td className="px-6 py-4 whitespace-nowrap">{formatReadableDate(visitor.datetime)}</td>
+                  <td className="px-6 py-4 whitespace-nowrap">{visitor.pincode}</td>
+                  <td className="px-6 py-4 whitespace-nowrap">{visitor.device}</td>
                   <td className="px-6 py-4 whitespace-nowrap">
                     {visitor.photo ? (
                       <img

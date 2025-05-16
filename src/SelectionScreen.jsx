@@ -1,5 +1,6 @@
 import { useNavigate } from "react-router-dom";
 import { useEffect, useState } from "react";
+import image1 from './assets/LOGO_KRISTELLAR_WHITE.png';
 
 function SelectionScreen() {
   const navigate = useNavigate();
@@ -48,12 +49,13 @@ function SelectionScreen() {
 
   return (
     <div className="flex flex-col items-center justify-center h-screen bg-gradient-to-r from-blue-900 via-indigo-900 to-purple-900 overflow-hidden relative">
-      {/* Decorative elements */}
-      {/* <div className="absolute top-0 left-0 w-full h-full overflow-hidden z-0">
-        <div className="absolute top-20 left-20 w-32 h-32 bg-pink-200 rounded-full mix-blend-multiply filter blur-xl opacity-30 animate-blob"></div>
-        <div className="absolute top-40 right-40 w-32 h-32 bg-yellow-200 rounded-full mix-blend-multiply filter blur-xl opacity-30 animate-blob animation-delay-2000"></div>
-        <div className="absolute bottom-40 left-1/3 w-32 h-32 bg-blue-200 rounded-full mix-blend-multiply filter blur-xl opacity-30 animate-blob animation-delay-4000"></div>
-      </div> */}
+
+      {/* Logo in the top-left corner */}
+      <img 
+        src={image1} 
+        alt="Logo" 
+        className="absolute top-4 left-4 w-40 h-20 z-50"
+      />
 
       {/* Animated particles/stars */}
       {particles.map((particle, index) => (
@@ -69,6 +71,7 @@ function SelectionScreen() {
           }}
         />
       ))}
+      
 
       <div
         className="relative text-center transition-all duration-1000 ease-out"
@@ -77,11 +80,12 @@ function SelectionScreen() {
           transform: `scale(${logoScale})`,
         }}
       >
+        
 
       {/* Main content */}
-      <div className="relative z-10 max-w-lg w-full bg-white/80 backdrop-filter backdrop-blur-lg rounded-2xl shadow-2xl p-10 border border-white border-opacity-20">
+      <div className="relative z-10 min-w-lg w-full bg-white/80 backdrop-filter backdrop-blur-lg rounded-2xl shadow-2xl p-10 border border-white border-opacity-20">
         <h1 className="text-4xl font-extrabold text-center text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-purple-600 mt-10 mb-4">
-          Visitor Management System
+          iVMS
         </h1>
         
         <div className="space-y-6 mt-8">
@@ -143,10 +147,6 @@ function SelectionScreen() {
         </div>
         
         
-      </div>
-      
-      <div className="text-center mt-6 text-sm text-indigo-900 opacity-70 relative z-10">
-        © 2025 Your Company • <span className="hover:underline cursor-pointer">Privacy Policy</span> • <span className="hover:underline cursor-pointer">Terms</span>
       </div>
       </div>
     </div>

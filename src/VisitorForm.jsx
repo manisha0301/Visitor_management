@@ -4,22 +4,19 @@ import { Camera, ArrowRight, CheckCircle, X, AlertCircle, Calendar, Hash, User, 
 import image1 from './assets/LOGO_KRISTELLAR_WHITE.png'; // Replace with your logo path
 import './VisitorForm.css'; // Import your CSS file for styles
 import { useNavigate } from 'react-router-dom';
-import { formatReadableDate } from './utils/formatDate';
 import axios from 'axios';
+import AnalogClock from './AnalogClock';
 
 export default function VisitorForm() {
   const navigate = useNavigate();
   const webcamRef = useRef(null);
   const [photoTaken, setPhotoTaken] = useState(false);
   const [photoData, setPhotoData] = useState(null);
-  const [slNumber, setSlNumber] = useState(1);
   const [formSubmitted, setFormSubmitted] = useState(false);
   const [formErrors, setFormErrors] = useState({});
   const [submitAnimation, setSubmitAnimation] = useState(false);
   const [showCamera, setShowCamera] = useState(false);
-  const [formErrors1, setFormErrors1] = useState({
-    phone: "",
-    otp: "",
+  const [formErrors1, setFormErrors1] = useState({phone: "", otp: "", 
   });
   const [showOtpButton, setShowOtpButton] = useState(false);
   const [otpSent, setOtpSent] = useState(false);
@@ -29,9 +26,6 @@ export default function VisitorForm() {
   const [searchQuery, setSearchQuery] = useState('');
   const [autoFilledFields, setAutoFilledFields] = useState([]);
   const [searchError, setSearchError] = useState('');
-  const [phone, setPhone] = useState('');
-  const [otp, setOtp] = useState('');
-
   
   const [formData, setFormData] = useState({
     dateTime: formatDateTime(new Date()),
@@ -43,7 +37,9 @@ export default function VisitorForm() {
     email: '',
     personToMeet: '',
     purpose: '',
-    photo: null
+    photo: null,
+    pincode: '', // New field
+    device: '',  // New field
   });
 
   function formatDateTime(date) {
@@ -57,42 +53,27 @@ export default function VisitorForm() {
     return `${year}-${month}-${day}T${hours}:${minutes}:${seconds}`;
   }
 
-  useEffect(() => {
-    // Check for saved SL number in localStorage
-    const savedSlNumber = localStorage.getItem('lastSlNumber');
-    if (savedSlNumber) {
-      const nextNumber = parseInt(savedSlNumber) + 1;
-      setSlNumber(nextNumber);
-      setFormData(prev => ({ ...prev, slNumber: nextNumber }));
-    }
-    
+  // New function to extract readable date (without time)
+  function formatReadableDate(dateString) {
+    const date = new Date(dateString);
+    return date.toLocaleDateString('en-US', {
+      weekday: 'long',
+      year: 'numeric',
+      month: 'long',
+      day: 'numeric'
+    });
+  }
+
+  useEffect(() => {    
     // Update date and time every minute
     const interval = setInterval(() => {
       setFormData(prev => ({ ...prev, dateTime: formatDateTime(new Date()) }));
-    }, 60000);
+    }, 1000);
     
     return () => {
       clearInterval(interval);
     };
   }, []);
-
-  useEffect(() => {
-    const phoneDigits = formData.phone.replace(/\D/g, "");
-  
-    if (phoneDigits.length === 10) {
-      setShowOtpButton(true);
-      setFormErrors1(prev => ({ ...prev, phone: "" }));
-    } else {
-      setShowOtpButton(false);
-      if (phoneDigits.length > 0) {
-        setFormErrors1(prev => ({
-          ...prev,
-          phone: "Phone number must be exactly 10 digits"
-        }));
-      }
-    }
-  }, [formData.phone]);
-  
 
   useEffect(() => {
     navigator.mediaDevices.enumerateDevices().then((devices) => {
@@ -119,7 +100,7 @@ export default function VisitorForm() {
     setShowCamera(false);
   };
 
-  const capturePhoto = () => {
+  const capturePhoto = async () => {
     if (webcamRef.current) {
       const imageSrc = webcamRef.current.getScreenshot();
       setPhotoData(imageSrc);
@@ -136,27 +117,51 @@ export default function VisitorForm() {
   };
 
   const handleSendOTP = async () => {
-    // try {
-    //   const response = await fetch('http://localhost:5000/api/otp/send-otp', {
-    //     method: 'POST',
-    //     headers: { 'Content-Type': 'application/json' },
-    //     body: JSON.stringify({ phone: formData.phone }),
-    //   });
+    try {
+      const response = await fetch('http://localhost:5000/api/otp/send-otp', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ phone: formData.phone }),
+      });
 
-    //   const data = await response.json();
+      const data = await response.json();
 
-    //   if (response.ok) {
+      if (response.ok) {
         setOtpSent(true);
         setShowOtpModal(true);
         setFormErrors({ ...formErrors, phone: "" });
         console.log('OTP sent to:', formData.phone);
-    //   } else {
-    //     setFormErrors1({ ...formErrors1, otp: data.error || "Failed to send OTP" });
-    //   }
-    // } catch (error) {
-    //   console.error("Error sending OTP:", error);
-    //   setFormErrors1({ ...formErrors1, otp: "Network error while sending OTP" });
-    // }
+      } else {
+        setFormErrors1({ ...formErrors1, otp: data.error || "Failed to send OTP" });
+      }
+    } catch (error) {
+      console.error("Error sending OTP:", error);
+      setFormErrors1({ ...formErrors1, otp: "Network error while sending OTP" });
+    }
+  };
+
+  const handleResendOTP = async () => {
+  try {
+    const response = await fetch('http://localhost:5000/api/otp/resend-otp', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ phone: formData.phone }), // Send the phone number to the backend
+    });
+
+    const data = await response.json();
+
+    if (response.ok) {
+      setOtpSent(true);
+      setShowOtpModal(true);
+      setFormErrors1({ ...formErrors1, otp: "" });
+      console.log('OTP resent to:', formData.phone);
+    } else {
+      setFormErrors1({ ...formErrors1, otp: data.error || "Failed to resend OTP" });
+    }
+  } catch (error) {
+    console.error("Error resending OTP:", error);
+    setFormErrors1({ ...formErrors1, otp: "Network error while resending OTP" });
+  }
 };
 
   const handleVerifyOTP = async () => {
@@ -166,59 +171,81 @@ export default function VisitorForm() {
     }
 
     setIsVerifying(true);
-    // try {
-    //   const response = await fetch('http://localhost:5000/api/otp/verify-otp', {
-    //     method: 'POST',
-    //     headers: { 'Content-Type': 'application/json' },
-    //     body: JSON.stringify({ phone: formData.phone, otp: formData.otp }),
-    //   });
+    try {
+      const response = await fetch('http://localhost:5000/api/otp/verify-otp', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ phone: formData.phone, otp: formData.otp }),
+      });
 
-    //   const data = await response.json();
+      const data = await response.json();
 
-    //   if (response.ok) {
+      if (response.ok) {
         setOtpVerified(true);
         setFormErrors1({ ...formErrors1, otp: "" });
         setTimeout(() => setShowOtpModal(false), 1000);
-    //   } else {
-    //     setFormErrors1({ ...formErrors1, otp: data.error || "Invalid OTP" });
-    //   }
-    // } catch (error) {
-    //   console.error("Error verifying OTP:", error);
-    //   setFormErrors1({ ...formErrors1, otp: "Network error during verification" });
-    // } finally {
-    //   setIsVerifying(false);
-    // }
+      } else {
+        setFormErrors1({ ...formErrors1, otp: data.error || "Invalid OTP" });
+      }
+    } catch (error) {
+      console.error("Error verifying OTP:", error);
+      setFormErrors1({ ...formErrors1, otp: "Network error during verification" });
+    } finally {
+      setIsVerifying(false);
+    }
   };
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
     setFormData(prev => ({ ...prev, [name]: value }));
     
-    // Clear error for this field when user starts typing
-    if (formErrors[name]) {
-      setFormErrors(prev => ({ ...prev, [name]: null }));
+    if (name === "name") {
+    // Allow only alphabets and spaces
+    const alphabetRegex = /^[a-zA-Z\s]*$/;
+    if (alphabetRegex.test(value)) {
+      setFormData((prev) => ({ ...prev, [name]: value }));
+      if (formErrors[name]) {
+        setFormErrors((prev) => ({ ...prev, [name]: null }));
+      }
+    } else {
+      setFormErrors((prev) => ({
+        ...prev,
+        name: "Name can only contain alphabets and spaces",
+      }));
     }
+  } else if (name === "phone") {
+      const phoneDigits = value.replace(/\D/g, ""); // Remove non-numeric characters
 
-    if (name === "phone") {
-      const phoneDigits = value.replace(/\D/g, "");
-  
       if (phoneDigits.length <= 10) {
-        setFormData(prev => ({ ...prev, phone: phoneDigits }));
-        if (formErrors.phone) {
-          setFormErrors(prev => ({ ...prev, phone: null }));
+        setFormData((prev) => ({ ...prev, phone: phoneDigits }));
+
+        if (phoneDigits.length === 10) {
+          setShowOtpButton(true);
+          setFormErrors1((prev) => ({ ...prev, phone: "" }));
+        } else {
+          setShowOtpButton(false);
+          if (phoneDigits.length > 0) {
+            setFormErrors1((prev) => ({
+              ...prev,
+              phone: "Phone number must be exactly 10 digits",
+            }));
+          }
         }
-      } else {
-        setFormErrors(prev => ({
-          ...prev,
-          phone: "Phone number cannot exceed 10 digits"
-        }));
       }
     } else if (name === "otp") {
       const otpDigits = value.replace(/\D/g, "");
       if (otpDigits.length <= 6) {
         setFormData(prev => ({ ...prev, [name]: otpDigits }));
       }
-    } else {
+    } else if (name === "pincode") {
+      const pincodeDigits = value.replace(/\D/g, ""); // Remove non-numeric characters
+      if (pincodeDigits.length <= 6) {
+        setFormData((prev) => ({ ...prev, pincode: pincodeDigits }));
+        if (formErrors.pincode) {
+          setFormErrors((prev) => ({ ...prev, pincode: null }));
+        }
+      } 
+    }else {
       setFormData(prev => ({ ...prev, [name]: value }));
       if (formErrors[name]) {
         setFormErrors(prev => ({ ...prev, [name]: null }));
@@ -228,27 +255,35 @@ export default function VisitorForm() {
 
   const validateForm = () => {
     const errors = {};
-    
+  
     if (!formData.name.trim()) errors.name = "Name is required";
     if (!formData.address.trim()) errors.address = "Address is required";
-    if (!formData.designation.trim()) errors.designation = "designation is required";
-    
+    if (!formData.designation.trim()) errors.designation = "Designation is required";
+  
     if (!formData.phone.trim()) {
       errors.phone = "Phone number is required";
     } else if (!/^\d{10}$/.test(formData.phone)) {
       errors.phone = "Please enter a valid 10-digit phone number";
-    }  
-    
+    }
+  
     if (!formData.email.trim()) {
       errors.email = "Email is required";
     } else if (!/\S+@\S+\.\S+/.test(formData.email)) {
       errors.email = "Please enter a valid email address";
     }
-    
+  
     if (!formData.personToMeet.trim()) errors.personToMeet = "Person to meet is required";
     if (!formData.purpose.trim()) errors.purpose = "Purpose of visit is required";
     if (!formData.photo) errors.photo = "Please take a photo";
-    
+  
+    if (!formData.pincode.trim()) {
+      errors.pincode = "Pincode is required";
+    } else if (!/^\d{6}$/.test(formData.pincode)) {
+      errors.pincode = "Please enter a valid 6-digit pincode";
+    }
+  
+    if (!formData.device.trim()) errors.device = "Device is required";
+  
     setFormErrors(errors);
     return Object.keys(errors).length === 0;
   };
@@ -322,10 +357,11 @@ export default function VisitorForm() {
         phone: visitor.phone || '',
         address: visitor.address || '',
         designation: visitor.designation || '',
+        pincode: visitor.pincode || '',
         // add more fields as needed
       }));
   
-      setAutoFilledFields(['name', 'email', 'phone', 'address', 'designation']); // dynamically include the fields you autofill
+      setAutoFilledFields(['name', 'email', 'phone', 'address', 'designation', 'pincode']); // dynamically include the fields you autofill
       setSearchError('');
     } catch (error) {
       console.error("Error searching visitor:", error);
@@ -333,6 +369,32 @@ export default function VisitorForm() {
       setAutoFilledFields([]); // clear autofilled indicators if no match
     }
   };
+
+  const checkExistingVisitor = async () => {
+  const res = await fetch("http://localhost:5000/api/face/match-face", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ image: photoData }),
+  });
+  const data = await res.json();
+  if (data.success) {
+    const { name, address, phone, email, designation, pincode } = data.details;
+    setFormData((prev) => ({
+      ...prev,
+      name,
+      address,
+      phone,
+      email,
+      designation,
+      pincode,
+    }));
+    // alert("Visitor recognized and form autofilled!");
+    setAutoFilledFields(['name', 'email', 'phone', 'address', 'designation', 'pincode']);
+  } else {
+    alert("No match found.");
+  }
+};
+
 
   const [videoConstraints, setVideoConstraints] = useState({
     width: 1280,
@@ -363,8 +425,9 @@ export default function VisitorForm() {
                     VISITOR DETAILS
                 </h1>
                 </div>
-                <div className="text-white text-sm md:text-base font-medium bg-white/10 backdrop-blur-sm px-4 py-2 rounded-full shadow-inner animate-pulse-subtle">
-                {formatReadableDate(formData.dateTime)}
+                <div className="text-white text-sm md:text-base font-medium px-4 py-2 rounded-full animate-pulse-subtle flex items-center gap-4">
+                  <span>{formatReadableDate(formData.dateTime)}</span>
+                  <AnalogClock dateTime={formData.dateTime} />
                 </div>
             </div>
             </div>
@@ -392,40 +455,120 @@ export default function VisitorForm() {
                 <form onSubmit={handleSubmit} className="space-y-6">
                                 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    {/* Search Bar */}
-                    <div
-                    className="transition-all duration-300 hover:shadow-lg p-4 rounded-xl border border-gray-100 bg-white/80 backdrop-blur-sm md:col-span-2 animate-fade-in-up"
-                    style={{ animationDelay: '0.9s' }}
-                  >
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Search</label>
-                    <div className="flex items-center border border-gray-200 rounded-lg overflow-hidden">
-                      <input
-                        type="text"
-                        placeholder="Search by Phone Number or Email ID..."
-                        value={searchQuery}
-                        onChange={(e) => setSearchQuery(e.target.value)}
-                        onKeyDown={(e) => {
-                          if (e.key === 'Enter') {
-                            fetchVisitor();
-                          }
-                        }}
-                        className="w-full px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
-                      />
-                      <button
-                        onClick={fetchVisitor}
-                        className="p-2 text-blue-500 hover:text-blue-700 focus:outline-none"
-                      >
-                        <Search className="h-5 w-5" />
-                      </button>
-                    </div>
-                    {searchError && (
-                      <p className="mt-2 text-sm text-red-500 flex items-center animate-shake">
-                        <AlertCircle className="h-4 w-4 mr-1" />
-                        {searchError}
-                      </p>
-                    )}
+                    <div className="flex gap-4 transition-all duration-300 hover:shadow-lg p-4 rounded-xl border border-gray-100 bg-white/80 backdrop-blur-sm md:col-span-2 animate-fade-in-up" style={{ animationDelay: '0.9s' }}>
+                      {/* Search Section */}
+                      <div className="w-1/2">
+                        <label className="block text-sm font-medium text-gray-700 mb-4">Search</label>
+                        <div className="flex items-center border border-gray-200 rounded-lg overflow-hidden">
+                          <input
+                            type="text"
+                            placeholder="Search by Phone Number or Email ID..."
+                            value={searchQuery}
+                            onChange={(e) => setSearchQuery(e.target.value)}
+                            onBlur={() => {
+                              const phoneRegex = /^\d{10}$/; // Regex for 10-digit phone number
+                              const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/; // Regex for valid email address
 
-                  </div>
+                              if (!phoneRegex.test(searchQuery) && !emailRegex.test(searchQuery)) {
+                                setSearchError('Please enter a valid 10-digit phone number or email ID.');
+                              } else {
+                                setSearchError('');
+                              }
+                            }}
+                            onKeyDown={(e) => {
+                              if (e.key === 'Enter') {
+                                const phoneRegex = /^\d{10}$/;
+                                const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+                                if (!phoneRegex.test(searchQuery) && !emailRegex.test(searchQuery)) {
+                                  setSearchError('Please enter a valid 10-digit phone number or email ID.');
+                                } else {
+                                  setSearchError('');
+                                  fetchVisitor();
+                                }
+                              }
+                            }}
+                            className="w-full px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                          />
+                          <button
+                            onClick={() => {
+                              const phoneRegex = /^\d{10}$/;
+                              const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+                              if (!phoneRegex.test(searchQuery) && !emailRegex.test(searchQuery)) {
+                                setSearchError('Please enter a valid 10-digit phone number or email ID.');
+                              } else {
+                                setSearchError('');
+                                fetchVisitor();
+                              }
+                            }}
+                            className="p-2 text-blue-500 hover:text-blue-700 focus:outline-none"
+                          >
+                            <Search className="h-5 w-5" />
+                          </button>
+                        </div>
+                        {searchError && (
+                          <p className="mt-2 text-sm text-red-500 flex items-center animate-shake">
+                            <AlertCircle className="h-4 w-4 mr-1" />
+                            {searchError}
+                          </p>
+                        )}
+                      </div>
+
+                      {/* Take Photo Section */}
+                      <div className="w-1/2 flex flex-col items-center justify-center">
+                      <label className="block self-start text-sm font-medium text-gray-700 mb-3">Photograph *</label>
+                        <div className="flex items-center justify-center w-full ">
+                        {showCamera ? (
+                          <div className="relative">
+                            <Webcam
+                              audio={false}
+                              ref={webcamRef}
+                              screenshotFormat="image/jpeg"
+                              videoConstraints={videoConstraints}
+                              className="w-64 h-48 bg-gray-100 rounded-lg"
+                            />
+                            <button
+                              type="button"
+                              onClick={capturePhoto}
+                              className="absolute bottom-2 left-1/2 transform -translate-x-1/2 bg-blue-600 text-white rounded-full p-3 hover:bg-blue-700 transition-colors shadow-lg hover:shadow-xl animate-bounce-subtle"
+                            >
+                              <Camera className="h-6 w-6" />
+                            </button>
+                          </div>
+                        ) : photoTaken && photoData ? (
+                          <div className="relative">
+                            <img src={photoData} alt="Captured" className="w-64 h-48 object-cover rounded-lg" />
+                            <button
+                              type="button"
+                              onClick={resetPhoto}
+                              className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full p-2 hover:bg-red-600 transition-colors shadow-md hover:shadow-lg transform hover:scale-110 transition-all"
+                            >
+                              <X className="h-4 w-4" />
+                            </button>
+                            <div className='flex justify-center'>
+                            <button
+                              type="button"
+                              onClick={checkExistingVisitor}
+                              className="mt-2 bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700"
+                            >
+                              Check Existing Visitor
+                            </button>
+                            </div>
+                          </div>
+                        ) : (
+                          <button
+                            type="button"
+                            onClick={startCamera}
+                            className="flex items-center w-full align-center justify-center bg-gradient-to-r from-blue-500 to-indigo-600 text-white px-5 py-3 rounded-full hover:shadow-lg transform transition-all duration-300 hover:scale-105 animate-pulse-subtle"
+                          >
+                            <Camera className="h-5 w-5 mr-2" />
+                            Take Photo
+                          </button>
+                        )}
+                        </div>
+                      </div>
+                    </div>
 
                     {/* Name */}
                     <div className="transition-all duration-300 hover:shadow-lg p-4 rounded-xl border border-gray-100 bg-white/80 backdrop-blur-sm animate-fade-in-up" style={{ animationDelay: '0.3s' }}>
@@ -435,6 +578,7 @@ export default function VisitorForm() {
                         <input
                           type="text"
                           name="name"
+                          maxLength={30}
                           value={formData.name}
                           onChange={handleInputChange}
                           className={`w-full pl-10 pr-4 py-3 border rounded-lg focus:ring-2 transition-all duration-300
@@ -455,6 +599,33 @@ export default function VisitorForm() {
                     )}
                     </div>
                     
+                    {/* designation */}
+                    <div className="transition-all duration-300 hover:shadow-lg p-4 rounded-xl border border-gray-100 bg-white/80 backdrop-blur-sm animate-fade-in-up" style={{ animationDelay: '0.5s' }}>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Designation *</label>
+                    <div className="relative">
+                        <Briefcase className="absolute left-3 top-1/2 transform -translate-y-1/2 text-blue-500 h-5 w-5" />
+                        <input
+                        type="text"
+                        name="designation"
+                        maxLength={30}
+                        value={formData.designation}
+                        onChange={handleInputChange}
+                        className={`w-full pl-10 pr-4 py-3 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-300 ${
+                            !searchError && formErrors.designation && !autoFilledFields.includes('designation') ? 'border-red-500 bg-red-50' :
+                              autoFilledFields.includes('designation') ? 'border-yellow-400 bg-yellow-50' :
+                              'border-gray-200'
+                        }`}
+                        placeholder="Enter your designation"
+                        />
+                    </div>
+                    {formErrors.designation && !autoFilledFields.includes('designation') && !searchError &&  (
+                        <p className="mt-2 text-sm text-red-500 flex items-center animate-shake">
+                        <AlertCircle className="h-4 w-4 mr-1" />
+                        {formErrors.designation}
+                        </p>
+                    )}
+                    </div>
+                    
                     {/* Address */}
                     <div className="transition-all duration-300 hover:shadow-lg p-4 rounded-xl border border-gray-100 bg-white/80 backdrop-blur-sm animate-fade-in-up" style={{ animationDelay: '0.4s' }}>
                     <label className="block text-sm font-medium text-gray-700 mb-1">Address *</label>
@@ -463,6 +634,7 @@ export default function VisitorForm() {
                         <input
                         type="text"
                         name="address"
+                        maxLength={100}
                         value={formData.address}
                         onChange={handleInputChange}
                         className={`w-full pl-10 pr-4 py-3 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-300 ${
@@ -480,31 +652,32 @@ export default function VisitorForm() {
                         </p>
                     )}
                     </div>
-                    
-                    {/* designation */}
-                    <div className="transition-all duration-300 hover:shadow-lg p-4 rounded-xl border border-gray-100 bg-white/80 backdrop-blur-sm animate-fade-in-up" style={{ animationDelay: '0.5s' }}>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Designation *</label>
-                    <div className="relative">
-                        <Briefcase className="absolute left-3 top-1/2 transform -translate-y-1/2 text-blue-500 h-5 w-5" />
+
+                    {/* Pincode */}
+                    <div className="transition-all duration-300 hover:shadow-lg p-4 rounded-xl border border-gray-100 bg-white/80 backdrop-blur-sm animate-fade-in-up" style={{ animationDelay: '0.9s' }}>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">Pincode *</label>
+                      <div className="relative">
+                        <Hash className="absolute left-3 top-1/2 transform -translate-y-1/2 text-blue-500 h-5 w-5" />
                         <input
-                        type="text"
-                        name="designation"
-                        value={formData.designation}
-                        onChange={handleInputChange}
-                        className={`w-full pl-10 pr-4 py-3 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-300 ${
-                            !searchError && formErrors.designation && !autoFilledFields.includes('designation') ? 'border-red-500 bg-red-50' :
-                              autoFilledFields.includes('designation') ? 'border-yellow-400 bg-yellow-50' :
+                          type="text"
+                          name="pincode"
+                          maxLength={6}
+                          value={formData.pincode || ''}
+                          onChange={handleInputChange}
+                          className={`w-full pl-10 pr-4 py-3 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-300 ${
+                            !searchError && formErrors.pincode && !autoFilledFields.includes('pincode') ? 'border-red-500 bg-red-50' :
+                              autoFilledFields.includes('pincode') ? 'border-yellow-400 bg-yellow-50' :
                               'border-gray-200'
-                        }`}
-                        placeholder="Enter your designation"
+                          }`}
+                          placeholder="Enter 6-digit pincode"
                         />
-                    </div>
-                    {formErrors.designation && !autoFilledFields.includes('designation') && !searchError &&  (
+                      </div>
+                      {formErrors.pincode && !autoFilledFields.includes('pincode') && !searchError && (
                         <p className="mt-2 text-sm text-red-500 flex items-center animate-shake">
-                        <AlertCircle className="h-4 w-4 mr-1" />
-                        {formErrors.designation}
+                          <AlertCircle className="h-4 w-4 mr-1" />
+                          {formErrors.pincode}
                         </p>
-                    )}
+                      )}
                     </div>
                     
                     {/* Phone */}
@@ -564,12 +737,13 @@ export default function VisitorForm() {
                     
                     {/* Email */}
                     <div className="transition-all duration-300 hover:shadow-lg p-4 rounded-xl border border-gray-100 bg-white/80 backdrop-blur-sm animate-fade-in-up" style={{ animationDelay: '0.7s' }}>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Email Address </label>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Email Address *</label>
                     <div className="relative">
                         <Mail className="absolute left-3 top-1/2 transform -translate-y-1/2 text-blue-500 h-5 w-5" />
                         <input
                         type="email"
                         name="email"
+                        maxLength={40}
                         value={formData.email}
                         onChange={handleInputChange}
                         className={`w-full pl-10 pr-4 py-3 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-300 ${
@@ -596,6 +770,7 @@ export default function VisitorForm() {
                         <input
                         type="text"
                         name="personToMeet"
+                        maxLength={20}
                         value={formData.personToMeet}
                         onChange={handleInputChange}
                         className={`w-full pl-10 pr-4 py-3 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-300 ${
@@ -613,6 +788,31 @@ export default function VisitorForm() {
                         </p>
                     )}
                     </div>
+
+                    {/* Device */}
+                    <div className="transition-all duration-300 hover:shadow-lg p-4 rounded-xl border border-gray-100 bg-white/80 backdrop-blur-sm animate-fade-in-up" style={{ animationDelay: '1s' }}>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">Device *</label>
+                      <div className="relative">
+                        <Briefcase className="absolute left-3 top-1/2 transform -translate-y-1/2 text-blue-500 h-5 w-5" />
+                        <input
+                          type="text"
+                          name="device"
+                          maxLength={50}
+                          value={formData.device || ''}
+                          onChange={handleInputChange}
+                          className={`w-full pl-10 pr-4 py-3 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-300 ${
+                            formErrors.device ? 'border-red-500 bg-red-50' : 'border-gray-200'
+                          }`}
+                          placeholder="Enter device name"
+                        />
+                      </div>
+                      {formErrors.device && (
+                        <p className="mt-2 text-sm text-red-500 flex items-center animate-shake">
+                          <AlertCircle className="h-4 w-4 mr-1" />
+                          {formErrors.device}
+                        </p>
+                      )}
+                    </div>
                     
                     {/* Purpose */}
                     <div className="transition-all duration-300 hover:shadow-lg p-4 rounded-xl border border-gray-100 bg-white/80 backdrop-blur-sm md:col-span-2 animate-fade-in-up" style={{ animationDelay: '0.9s' }}>
@@ -621,6 +821,7 @@ export default function VisitorForm() {
                         <MessageSquare className="absolute left-3 top-3 text-blue-500 h-5 w-5" />
                         <textarea
                         name="purpose"
+                        maxLength={100}
                         value={formData.purpose}
                         onChange={handleInputChange}
                         rows="3"
@@ -641,11 +842,10 @@ export default function VisitorForm() {
                     </div>
                     
                     {/* Photo Capture */}
-                    <div className="md:col-span-2 transition-all duration-300 hover:shadow-lg p-4 rounded-xl border border-gray-100 bg-white/80 backdrop-blur-sm animate-fade-in-up" style={{ animationDelay: '1s' }}>
+                    {/* <div className="md:col-span-2 transition-all duration-300 hover:shadow-lg p-4 rounded-xl border border-gray-100 bg-white/80 backdrop-blur-sm animate-fade-in-up" style={{ animationDelay: '1s' }}>
                     <label className="block text-sm font-medium text-gray-700 mb-3">Photograph *</label>
                     
                     <div className="flex flex-col items-center">
-                        {/* Webcam component */}
                         {showCamera && (
                         <div className="relative mb-4 rounded-xl overflow-hidden border-4 border-blue-500 shadow-lg animate-fade-in">
                             <div className="absolute inset-0 bg-grid-pattern opacity-5"></div>
@@ -656,10 +856,10 @@ export default function VisitorForm() {
                             videoConstraints={videoConstraints}
                             className="w-64 h-48 bg-gray-100"
                             />
-                            {/* <div className="relative top-2 left-2 bg-blue-600/80 text-white text-xs px-2 py-1 rounded-full animate-pulse flex items-center">
+                            <div className="relative top-2 left-2 bg-blue-600/80 text-white text-xs px-2 py-1 rounded-full animate-pulse flex items-center">
                             <Circle className="h-2 w-2 mr-1 fill-red-500 text-red-500" />
                             Live Camera
-                            </div> */}
+                            </div>
                             <button
                             type="button"
                             onClick={capturePhoto}
@@ -670,20 +870,14 @@ export default function VisitorForm() {
                         </div>
                         )}
                         
-                        {/* Photo Preview */}
+
                         {photoTaken && photoData && (
                         <div className="relative mb-4 animate-fade-in">
-                            {/* <div className="rounded-xl overflow-hidden border-4 border-green-500 shadow-lg"> */}
                             <img 
                                 src={photoData} 
                                 alt="Captured" 
                                 className="w-64 h-48 object-cover" 
                             />
-                            {/* <div className="absolute bottom-2 left-2 bg-green-600/80 text-white text-xs px-2 py-1 rounded-full flex items-center">
-                                <Check className="h-3 w-3 mr-1" />
-                                Photo Captured
-                            </div> */}
-                            {/* </div> */}
                             <button
                             type="button"
                             onClick={resetPhoto}
@@ -694,7 +888,7 @@ export default function VisitorForm() {
                         </div>
                         )}
                         
-                        {/* Camera Controls */}
+
                         {!showCamera && !photoTaken && (
                         <button
                             type="button"
@@ -713,7 +907,7 @@ export default function VisitorForm() {
                         </p>
                         )}
                     </div>
-                    </div>
+                    </div> */}
                 </div>
                 
                 {/* Submit Button */}
@@ -739,7 +933,7 @@ export default function VisitorForm() {
             <div className="px-6 py-4 bg-gradient-to-r from-gray-50 to-gray-100 text-center border-t border-gray-200">
             <p className="text-sm text-gray-600 flex items-center justify-center">
                 {/* <Shield className="h-4 w-4 mr-2 text-blue-500" /> */}
-                © {new Date().getFullYear()} Your Company Name. All rights reserved.
+                © 2021 Kristellar Aerospace. All rights reserved.
             </p>
             </div>
         </div>
@@ -811,7 +1005,7 @@ export default function VisitorForm() {
   
               {otpSent && !otpVerified && (
                 <button
-                  onClick={handleSendOTP}
+                  onClick={handleResendOTP}
                   className="w-full mt-2 py-2 px-4 rounded-lg font-medium text-blue-600 bg-transparent hover:bg-blue-50 transition-all duration-300"
                 >
                   Resend OTP
