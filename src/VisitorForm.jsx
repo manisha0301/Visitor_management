@@ -26,6 +26,8 @@ export default function VisitorForm() {
   const [searchQuery, setSearchQuery] = useState('');
   const [autoFilledFields, setAutoFilledFields] = useState([]);
   const [searchError, setSearchError] = useState('');
+  const [isLoading, setIsLoading] = useState(false);
+  const [photoError, setPhotoError] = useState('');
   
   const [formData, setFormData] = useState({
     dateTime: formatDateTime(new Date()),
@@ -340,6 +342,7 @@ export default function VisitorForm() {
   };
 
   const fetchVisitor = async () => {
+    setIsLoading(true);
     try {
       const response = await axios.get(`http://localhost:5000/api/visitors/search?query=${searchQuery}`);
       const visitor = response.data;
@@ -367,33 +370,47 @@ export default function VisitorForm() {
       console.error("Error searching visitor:", error);
       setSearchError('No visitor found with this phone number or email.');
       setAutoFilledFields([]); // clear autofilled indicators if no match
+    } finally {
+      setIsLoading(false); // Stop loading
     }
   };
 
   const checkExistingVisitor = async () => {
-  const res = await fetch("http://localhost:5000/api/face/match-face", {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ image: photoData }),
-  });
-  const data = await res.json();
-  if (data.success) {
-    const { name, address, phone, email, designation, pincode } = data.details;
-    setFormData((prev) => ({
-      ...prev,
-      name,
-      address,
-      phone,
-      email,
-      designation,
-      pincode,
-    }));
-    // alert("Visitor recognized and form autofilled!");
-    setAutoFilledFields(['name', 'email', 'phone', 'address', 'designation', 'pincode']);
-  } else {
-    alert("No match found.");
-  }
-};
+    if (!photoData) {
+      setPhotoError('Please capture a photo before checking for an existing visitor.');
+      return;
+    }
+    setPhotoError('');
+    setIsLoading(true);
+    try{
+      const res = await fetch("http://localhost:5000/api/face/match-face", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ image: photoData }),
+      });
+      const data = await res.json();
+      if (data.success) {
+        const { name, address, phone, email, designation, pincode } = data.details;
+      setFormData((prev) => ({
+        ...prev,
+        name,
+        address,
+        phone,
+        email,
+        designation,
+        pincode,
+      }));
+      // alert("Visitor recognized and form autofilled!");
+      setAutoFilledFields(['name', 'email', 'phone', 'address', 'designation', 'pincode']);
+      } else {
+        alert("No match found.");
+      }
+    }catch (error) {
+      console.error("Face match error:", error);
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
 
   const [videoConstraints, setVideoConstraints] = useState({
@@ -410,6 +427,26 @@ export default function VisitorForm() {
             <div className="absolute bottom-0 right-0 w-96 h-96 bg-indigo-300 rounded-full mix-blend-multiply filter blur-3xl opacity-20 animate-float"></div>
             <div className="absolute top-1/2 left-1/4 w-80 h-80 bg-purple-200 rounded-full mix-blend-multiply filter blur-3xl opacity-10 animate-float-delay"></div>
         </div>
+
+        {isLoading && (
+        <div className="fixed inset-0 backdrop-blur-sm bg-black/40 flex items-center justify-center z-50">
+          <div className="relative">
+            {/* Outer spinning ring */}
+            <div className="w-24 h-24 rounded-full border-4 border-t-transparent border-blue-300 animate-spin"></div>
+            
+            {/* Middle spinning ring */}
+            <div className="absolute top-2 left-2 w-20 h-20 rounded-full border-4 border-r-transparent border-indigo-400 animate-spin" style={{ animationDirection: 'reverse', animationDuration: '1.5s' }}></div>
+            
+            {/* Inner gradient circle with pulse effect */}
+            <div className="absolute top-4 left-4 w-16 h-16 rounded-full bg-gradient-to-r from-blue-600 via-indigo-600 to-purple-700 animate-pulse flex items-center justify-center">
+              <div className="w-8 h-8 rounded-full bg-white/20 backdrop-blur-sm"></div>
+            </div>
+            
+            {/* Flowing gradient background */}
+            <div className="absolute -inset-8 bg-gradient-to-r from-blue-600 via-indigo-600 to-purple-700 rounded-full opacity-20 animate-pulse" style={{ animationDuration: '2s' }}></div>
+          </div>
+        </div>
+      )}
 
         <div className="max-w-4xl mx-auto bg-white rounded-2xl shadow-2xl overflow-hidden relative z-10 transform transition-all duration-500 hover:shadow-3xl animate-rise">
             {/* Header with Logo */}
@@ -936,6 +973,7 @@ export default function VisitorForm() {
                 © 2021 Kristellar Aerospace. All rights reserved.
             </p>
             </div>
+            
         </div>
 
         {/* OTP Modal */}
@@ -1014,6 +1052,9 @@ export default function VisitorForm() {
             </div>
           </div>
         )}
+
+        
+
     </div>
   );
 }
