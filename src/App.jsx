@@ -7,15 +7,18 @@ import SelectionScreen from "./SelectionScreen";
 import Login from "./Login";
 import Dashboard from "./Dashboard";
 import ProtectedRoute from "./ProtectedRoute";
+import HallBookingForm from "./HallBookingFOrm";
 
 function App() {
   return (
-    <Router>
+    // <Router basename="/visitor-frontend">
+    <Router >
       <Routes>
         <Route path="/" element={<SplashScreen />} />
         <Route path="/select" element={<SelectionScreen />} />
         <Route path="/visitor" element={<VisitorForm />} />
         <Route path="/courier" element={<CourierForm />} />
+        <Route path="/hallbooking" element={<HallBookingForm />} />
         <Route path="/login" element={<Login />} />
         <Route path="/dashboard" element={<ProtectedRoute> <Dashboard /> </ProtectedRoute>} />
       </Routes>

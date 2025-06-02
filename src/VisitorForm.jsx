@@ -120,7 +120,7 @@ export default function VisitorForm() {
 
   const handleSendOTP = async () => {
     try {
-      const response = await fetch('http://localhost:5000/api/otp/send-otp', {
+      const response = await fetch('http://localhost:5001/api/otp/send-otp', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ phone: formData.phone }),
@@ -144,7 +144,7 @@ export default function VisitorForm() {
 
   const handleResendOTP = async () => {
   try {
-    const response = await fetch('http://localhost:5000/api/otp/resend-otp', {
+    const response = await fetch('http://localhost:5001/api/otp/resend-otp', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ phone: formData.phone }), // Send the phone number to the backend
@@ -174,7 +174,7 @@ export default function VisitorForm() {
 
     setIsVerifying(true);
     try {
-      const response = await fetch('http://localhost:5000/api/otp/verify-otp', {
+      const response = await fetch('http://localhost:5001/api/otp/verify-otp', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ phone: formData.phone, otp: formData.otp }),
@@ -305,7 +305,7 @@ export default function VisitorForm() {
     if (validateForm()) {
       //console.log("Form submitted:", formData);
 
-      fetch('http://localhost:5000/api/visitors/submit', {
+      fetch('http://localhost:5001/api/visitors/submit', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json'
@@ -344,7 +344,7 @@ export default function VisitorForm() {
   const fetchVisitor = async () => {
     setIsLoading(true);
     try {
-      const response = await axios.get(`http://localhost:5000/api/visitors/search?query=${searchQuery}`);
+      const response = await axios.get(`http://localhost:5001/api/visitors/search?query=${searchQuery}`);
       const visitor = response.data;
 
       if (!visitor) {
@@ -383,7 +383,7 @@ export default function VisitorForm() {
     setPhotoError('');
     setIsLoading(true);
     try{
-      const res = await fetch("http://localhost:5000/api/face/match-face", {
+      const res = await fetch("http://localhost:5001/api/face/match-face", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ image: photoData }),

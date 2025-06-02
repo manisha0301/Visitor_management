@@ -4,19 +4,12 @@ import { formatReadableDate } from './utils/formatDate';
 
 const Administration = () => {
   const [activeTab, setActiveTab] = useState('view');
-  // const [users, setUsers] = useState([
-  //   { id: 1, name: 'John Doe', username: 'johndoe', role: 'Admin', createdAt: '2025-04-28' },
-  //   { id: 2, name: 'Jane Smith', username: 'janesmith', role: 'User', createdAt: '2025-04-27' },
-  //   { id: 3, name: 'Mike Johnson', username: 'mikejohnson', role: 'Editor', createdAt: '2025-04-26' },
-  //   { id: 4, name: 'Emily Brown', username: 'emilybrown', role: 'User', createdAt: '2025-04-25' },
-  //   { id: 5, name: 'Chris Lee', username: 'chrislee', role: 'Admin', createdAt: '2025-04-24' },
-  // ]);
   const [users, setUsers] = useState([]);
   const [newUser, setNewUser] = useState({ name: '', username: '', password: '', role: 'User' });
   const [selectedIds, setSelectedIds] = useState([]);
 
   useEffect(() => {
-    fetch('http://localhost:5000/api/users')
+    fetch('http://localhost:5001/api/users')
       .then(res => res.json())
       .then(data => setUsers(data))
       .catch(err => console.error('Failed to fetch users:', err));
@@ -26,7 +19,7 @@ const Administration = () => {
     e.preventDefault();
   
     try {
-      const response = await fetch('http://localhost:5000/api/register', {
+      const response = await fetch('http://localhost:5001/api/register', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(newUser)
@@ -54,7 +47,7 @@ const Administration = () => {
 
   const handleDeleteUsers = async () => {
     try {
-      const response = await fetch('http://localhost:5000/api/users', {
+      const response = await fetch('http://localhost:5001/api/users', {
         method: 'DELETE',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ ids: selectedIds })
@@ -170,7 +163,7 @@ const Administration = () => {
                 >
                   <option value="User">User</option>
                   <option value="Admin">Admin</option>
-                  <option value="Editor">Editor</option>
+                  <option value="Office Executive">Office Executive</option>
                 </select>
               </div>
               <button
