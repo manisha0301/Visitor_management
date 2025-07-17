@@ -7,7 +7,7 @@ import { formatReadableDate } from './utils/formatDate';
     const [searchQuery, setSearchQuery] = useState('');
   
     useEffect(() => {
-      fetch('http://localhost:5001/api/couriers/all')
+      fetch('https://ivms.local/api/couriers/all')
         .then(res => res.json())
         .then(data => setCouriers(data))
         .catch(err => console.error('Error fetching couriers:', err));

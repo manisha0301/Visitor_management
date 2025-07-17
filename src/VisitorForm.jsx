@@ -120,7 +120,7 @@ export default function VisitorForm() {
 
   const handleSendOTP = async () => {
     try {
-      const response = await fetch('http://localhost:5001/api/otp/send-otp', {
+      const response = await fetch('https://ivms.local/api/otp/send-otp', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ phone: formData.phone }),
@@ -144,7 +144,7 @@ export default function VisitorForm() {
 
   const handleResendOTP = async () => {
   try {
-    const response = await fetch('http://localhost:5001/api/otp/resend-otp', {
+    const response = await fetch('https://ivms.local/api/otp/resend-otp', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ phone: formData.phone }), // Send the phone number to the backend
@@ -174,7 +174,7 @@ export default function VisitorForm() {
 
     setIsVerifying(true);
     try {
-      const response = await fetch('http://localhost:5001/api/otp/verify-otp', {
+      const response = await fetch('https://ivms.local/api/otp/verify-otp', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ phone: formData.phone, otp: formData.otp }),
@@ -221,7 +221,7 @@ export default function VisitorForm() {
       if (phoneDigits.length <= 10) {
         setFormData((prev) => ({ ...prev, phone: phoneDigits }));
 
-        if (phoneDigits.length === 10) {
+        if (phoneDigits.length === 10 && autoFilledFields.length === 0) {
           setShowOtpButton(true);
           setFormErrors1((prev) => ({ ...prev, phone: "" }));
         } else {
@@ -294,7 +294,7 @@ export default function VisitorForm() {
     e.preventDefault();
 
     // Check if OTP is verified
-    if (!otpVerified) {
+    if (autoFilledFields.length === 0 && !otpVerified) {
       setFormErrors1((prev) => ({
         ...prev,
         otp: "Please verify the OTP before submitting the form",
@@ -305,7 +305,7 @@ export default function VisitorForm() {
     if (validateForm()) {
       //console.log("Form submitted:", formData);
 
-      fetch('http://localhost:5001/api/visitors/submit', {
+      fetch('https://ivms.local/api/visitors/submit', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json'
@@ -344,7 +344,7 @@ export default function VisitorForm() {
   const fetchVisitor = async () => {
     setIsLoading(true);
     try {
-      const response = await axios.get(`http://localhost:5001/api/visitors/search?query=${searchQuery}`);
+      const response = await axios.get(`https://ivms.local/api/visitors/search?query=${searchQuery}`);
       const visitor = response.data;
 
       if (!visitor) {
@@ -366,6 +366,7 @@ export default function VisitorForm() {
   
       setAutoFilledFields(['name', 'email', 'phone', 'address', 'designation', 'pincode']); // dynamically include the fields you autofill
       setSearchError('');
+      setOtpVerified(true); 
     } catch (error) {
       console.error("Error searching visitor:", error);
       setSearchError('No visitor found with this phone number or email.');
@@ -383,7 +384,7 @@ export default function VisitorForm() {
     setPhotoError('');
     setIsLoading(true);
     try{
-      const res = await fetch("http://localhost:5001/api/face/match-face", {
+      const res = await fetch("https://ivms.local/api/face/match-face", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ image: photoData }),
@@ -402,6 +403,7 @@ export default function VisitorForm() {
       }));
       // alert("Visitor recognized and form autofilled!");
       setAutoFilledFields(['name', 'email', 'phone', 'address', 'designation', 'pincode']);
+      setOtpVerified(true); 
       } else {
         alert("No match found.");
       }
@@ -604,6 +606,12 @@ export default function VisitorForm() {
                           </button>
                         )}
                         </div>
+                        {formErrors.photo && !autoFilledFields.includes('photo') && !searchError && (
+                        <p className="mt-2 text-sm text-red-500 flex self-start items-center animate-shake">
+                        <AlertCircle className="h-4 w-4 mr-1" />
+                        {formErrors.photo}
+                        </p>
+                    )}
                       </div>
                     </div>
 
@@ -750,7 +758,7 @@ export default function VisitorForm() {
                         )}
                       </div>
     
-                      {showOtpButton  && (
+                      {showOtpButton && autoFilledFields.length === 0 && (
                         <div>
                         <button
                           type='button'
@@ -818,7 +826,7 @@ export default function VisitorForm() {
                         placeholder="Enter person's name"
                         />
                     </div>
-                    {formErrors.personToMeet && !autoFilledFields.includes('name')  && !searchError && (
+                    {formErrors.personToMeet && (
                         <p className="mt-2 text-sm text-red-500 flex items-center animate-shake">
                         <AlertCircle className="h-4 w-4 mr-1" />
                         {formErrors.personToMeet}
@@ -870,81 +878,13 @@ export default function VisitorForm() {
                         placeholder="Describe the purpose of your visit"
                         ></textarea>
                     </div>
-                    {formErrors.purpose && !autoFilledFields.includes('name') && !searchError && (
+                    {formErrors.purpose &&  (
                         <p className="mt-2 text-sm text-red-500 flex items-center animate-shake">
                         <AlertCircle className="h-4 w-4 mr-1" />
                         {formErrors.purpose}
                         </p>
                     )}
                     </div>
-                    
-                    {/* Photo Capture */}
-                    {/* <div className="md:col-span-2 transition-all duration-300 hover:shadow-lg p-4 rounded-xl border border-gray-100 bg-white/80 backdrop-blur-sm animate-fade-in-up" style={{ animationDelay: '1s' }}>
-                    <label className="block text-sm font-medium text-gray-700 mb-3">Photograph *</label>
-                    
-                    <div className="flex flex-col items-center">
-                        {showCamera && (
-                        <div className="relative mb-4 rounded-xl overflow-hidden border-4 border-blue-500 shadow-lg animate-fade-in">
-                            <div className="absolute inset-0 bg-grid-pattern opacity-5"></div>
-                            <Webcam
-                            audio={false}
-                            ref={webcamRef}
-                            screenshotFormat="image/jpeg"
-                            videoConstraints={videoConstraints}
-                            className="w-64 h-48 bg-gray-100"
-                            />
-                            <div className="relative top-2 left-2 bg-blue-600/80 text-white text-xs px-2 py-1 rounded-full animate-pulse flex items-center">
-                            <Circle className="h-2 w-2 mr-1 fill-red-500 text-red-500" />
-                            Live Camera
-                            </div>
-                            <button
-                            type="button"
-                            onClick={capturePhoto}
-                            className="absolute bottom-2 left-1/2 transform -translate-x-1/2 bg-blue-600 text-white rounded-full p-3 hover:bg-blue-700 transition-colors shadow-lg hover:shadow-xl animate-bounce-subtle"
-                            >
-                            <Camera className="h-6 w-6" />
-                            </button>
-                        </div>
-                        )}
-                        
-
-                        {photoTaken && photoData && (
-                        <div className="relative mb-4 animate-fade-in">
-                            <img 
-                                src={photoData} 
-                                alt="Captured" 
-                                className="w-64 h-48 object-cover" 
-                            />
-                            <button
-                            type="button"
-                            onClick={resetPhoto}
-                            className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full p-2 hover:bg-red-600 transition-colors shadow-md hover:shadow-lg transform hover:scale-110 transition-all"
-                            >
-                            <X className="h-4 w-4" />
-                            </button>
-                        </div>
-                        )}
-                        
-
-                        {!showCamera && !photoTaken && (
-                        <button
-                            type="button"
-                            onClick={startCamera}
-                            className="flex items-center bg-gradient-to-r from-blue-500 to-indigo-600 text-white px-5 py-3 rounded-full hover:shadow-lg transform transition-all duration-300 hover:scale-105 animate-pulse-subtle"
-                        >
-                            <Camera className="h-5 w-5 mr-2" />
-                            Take Photo
-                        </button>
-                        )}
-                        
-                        {formErrors.photo && !photoTaken && !autoFilledFields.includes('name') && !searchError && (
-                        <p className="mt-2 text-sm text-red-500 flex items-center animate-shake">
-                            <AlertCircle className="h-4 w-4 mr-1" />
-                            {formErrors.photo}
-                        </p>
-                        )}
-                    </div>
-                    </div> */}
                 </div>
                 
                 {/* Submit Button */}
@@ -977,7 +917,7 @@ export default function VisitorForm() {
         </div>
 
         {/* OTP Modal */}
-        {showOtpModal && (
+        {showOtpModal && autoFilledFields.length === 0 && (
           <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50">
             <div className="bg-white rounded-xl p-6 max-w-md w-full animate-fade-in-up">
               <div className="flex justify-between items-center mb-4">

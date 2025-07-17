@@ -8,10 +8,10 @@ import Login from "./Login";
 import Dashboard from "./Dashboard";
 import ProtectedRoute from "./ProtectedRoute";
 import HallBookingForm from "./HallBookingFOrm";
+// https://ivms.local
 
 function App() {
   return (
-    // <Router basename="/visitor-frontend">
     <Router >
       <Routes>
         <Route path="/" element={<SplashScreen />} />

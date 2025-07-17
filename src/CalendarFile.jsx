@@ -116,8 +116,8 @@ const CalendarFile = () => {
     setIsLoading(true);
     setError('');
     try {
-      console.log('Fetching bookings from http://localhost:5001/api/hallbooking/all');
-      const response = await fetch('http://localhost:5001/api/hallbooking/all', {
+      console.log('Fetching bookings from https://ivms.local/api/hallbooking/all');
+      const response = await fetch('https://ivms.local/api/hallbooking/all', {
         method: 'GET',
         headers: { 
           'Content-Type': 'application/json',

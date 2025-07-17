@@ -6,6 +6,7 @@ function SelectionScreen() {
   const navigate = useNavigate();
   const [hoverVisitor, setHoverVisitor] = useState(false);
   const [hoverCourier, setHoverCourier] = useState(false);
+  const [hoverHallBooking, setHoverHallBooking] = useState(false);
   const [mainVisible, setMainVisible] = useState(false);
   const [textVisible, setTextVisible] = useState(false);
   const [logoScale, setLogoScale] = useState(0.5);
@@ -141,6 +142,34 @@ function SelectionScreen() {
               </div>
             </div>
             <svg xmlns="http://www.w3.org/2000/svg" className={`h-6 w-6 ${hoverCourier ? "text-white" : "text-green-500"}`} fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+            </svg>
+          </button>
+          
+          <button
+            onClick={() => navigate("/hallbooking")}
+            onMouseEnter={() => setHoverHallBooking(true)}
+            onMouseLeave={() => setHoverHallBooking(false)}
+            className={`w-full flex items-center justify-between px-6 py-5 rounded-xl font-semibold shadow-md transition-all duration-300 ${
+              hoverHallBooking 
+                ? "bg-gradient-to-r from-red-600 to-red-700 text-white transform -translate-y-1 shadow-xl" 
+                : "bg-gradient-to-r from-red-50 to-red-100 text-red-600 border border-red-200"
+            }`}
+          >
+            <div className="flex items-center">
+              <div className={`w-12 h-12 rounded-full flex items-center justify-center mr-4 transition-colors ${
+                hoverHallBooking ? "bg-white bg-opacity-20" : "bg-red-200"
+              }`}>
+                <svg xmlns="http://www.w3.org/2000/svg" className={`h-6 w-6 ${hoverHallBooking ? "text-red-600" : "text-red-600"}`} fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 8h14M5 8a2 2 0 110-4h14a2 2 0 110 4M5 8v10a2 2 0 002 2h10a2 2 0 002-2V8m-9 4h4" />
+                </svg>
+              </div>
+              <div className="text-left">
+                <p className="font-bold text-lg">Hall Booking</p>
+                <p className={`text-sm ${hoverHallBooking ? "text-red-100" : "text-red-500"}`}>For conference hall booking</p>
+              </div>
+            </div>
+            <svg xmlns="http://www.w3.org/2000/svg" className={`h-6 w-6 ${hoverHallBooking ? "text-white" : "text-red-500"}`} fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
             </svg>
           </button>

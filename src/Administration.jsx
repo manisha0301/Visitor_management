@@ -9,7 +9,7 @@ const Administration = () => {
   const [selectedIds, setSelectedIds] = useState([]);
 
   useEffect(() => {
-    fetch('http://localhost:5001/api/users')
+    fetch('https://ivms.local/api/users')
       .then(res => res.json())
       .then(data => setUsers(data))
       .catch(err => console.error('Failed to fetch users:', err));
@@ -19,7 +19,7 @@ const Administration = () => {
     e.preventDefault();
   
     try {
-      const response = await fetch('http://localhost:5001/api/register', {
+      const response = await fetch('https://ivms.local/api/register', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(newUser)
@@ -47,7 +47,7 @@ const Administration = () => {
 
   const handleDeleteUsers = async () => {
     try {
-      const response = await fetch('http://localhost:5001/api/users', {
+      const response = await fetch('https://ivms.local/api/users', {
         method: 'DELETE',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ ids: selectedIds })

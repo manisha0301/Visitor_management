@@ -8,7 +8,7 @@ import { formatReadableDate } from './utils/formatDate';
     const [enlargedImage, setEnlargedImage] = useState(null);
   
     useEffect(() => {
-      fetch('http://localhost:5001/api/visitors/all')
+      fetch('https://ivms.local/api/visitors/all')
         .then(res => res.json())
         .then(data => setVisitors(data))
         .catch(err => console.error('Error fetching visitors:', err));
@@ -78,10 +78,10 @@ import { formatReadableDate } from './utils/formatDate';
                   <td className="px-6 py-4 whitespace-nowrap">
                     {visitor.photo ? (
                       <img
-                        src={`http://localhost:5001${visitor.photo}`}
+                        src={`https://ivms.local${visitor.photo}`}
                         alt="Visitor"
                         className="h-10 w-10 rounded-full object-cover cursor-pointer"
-                        onClick={() => setEnlargedImage(`http://localhost:5001${visitor.photo}`)}
+                        onClick={() => setEnlargedImage(`https://ivms.local${visitor.photo}`)}
                       />
                     ) : (
                       <span className="text-gray-400 text-sm italic">No Photo</span>

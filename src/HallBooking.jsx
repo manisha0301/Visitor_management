@@ -18,7 +18,7 @@ const HallBooking = () => {
       setIsLoading(true);
       setError('');
       try {
-        const response = await fetch('http://localhost:5001/api/hallbooking/all', {
+        const response = await fetch('https://ivms.local/api/hallbooking/all', {
           method: 'GET',
           headers: { 'Content-Type': 'application/json' },
         });
@@ -69,7 +69,7 @@ const HallBooking = () => {
   // Handle status updates
   const handleStatusUpdate = async (id, status, reason = '') => {
     try {
-      const response = await fetch(`http://localhost:5001/api/hallbooking/${id}/status`, {
+      const response = await fetch(`https://ivms.local/api/hallbooking/${id}/status`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ status, reason })

@@ -104,7 +104,7 @@ export default function CourierForm() {
       localStorage.setItem('lastserialnumber', formData.serialnumber);
   
       // Submit to backend
-      fetch('http://localhost:5001/api/couriers/submit', {
+      fetch('https://ivms.local/api/couriers/submit', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(formData),
