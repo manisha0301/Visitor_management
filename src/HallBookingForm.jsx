@@ -424,7 +424,10 @@ export default function HallBookingForm() {
                         </>
                       )}
                       {formData.floor === '4' && (
+                        <>
+                        <option value="Training Hall">Training Hall</option>
                         <option value="Small Conference Room">Small Conference Room</option>
+                        </>
                       )}
                     </select>
                   </div>
